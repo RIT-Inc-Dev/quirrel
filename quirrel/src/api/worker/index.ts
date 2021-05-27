@@ -102,6 +102,8 @@ export async function createWorker({
       }
     }
 
+    endpoint = decodeURIComponent(endpoint);
+
     if (runningInDocker) {
       endpoint = replaceLocalhostWithDockerHost(endpoint);
     }

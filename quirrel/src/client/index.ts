@@ -258,7 +258,7 @@ export class QuirrelClient<T> {
     this.baseUrl =
       quirrelBaseUrl +
       "/queues/" +
-      encodeURIComponent(applicationBaseUrl + "/" + args.route);
+      encodeURIComponent(encodeURIComponent(applicationBaseUrl + "/" + args.route));
     this.token = args.config?.token ?? config.getQuirrelToken();
     this.route = args.route;
     this.encryptor = getEncryptor(
