@@ -23,7 +23,7 @@
   ],
   "main": "dist/cjs/src/index.js",
   "module": "dist/esm/src/index.js",
-  "version": "1.7.4-rit",
+  "version": "1.7.4-rit-2",
   "engines": {
     "node": "12 || 14 || 15 || 16"
   },
