@@ -164,7 +164,7 @@ export class JobsRepo implements Closable {
 
   public async delete(tokenId: string, endpoint: string, id: string) {
     return await this.producer.delete(
-      encodeQueueDescriptor(tokenId, endpoint),
+      encodeQueueDescriptor(tokenId, endpoint), // TODO encode
       id
     );
   }
@@ -183,6 +183,8 @@ export class JobsRepo implements Closable {
       retry,
     }: EnqueueJob
   ) {
+    console.log("tokenId", tokenId)
+    console.log('body', body)
     if (typeof id === "undefined") {
       id = uuid.v4();
     }
@@ -219,7 +221,12 @@ export class JobsRepo implements Closable {
       schedule_meta = "" + repeat.every;
     }
 
+    console.log('before created job')
+    console.log('tokenId', tokenId)
+    console.log('endpoint', endpoint)
+    console.log('encodeQueueDescripted', encodeQueueDescriptor(tokenId, endpoint))
     const createdJob = await this.producer.enqueue({
+      // TODO encode
       queue: encodeQueueDescriptor(tokenId, endpoint),
       id,
       payload: body ?? "",
@@ -235,6 +242,7 @@ export class JobsRepo implements Closable {
       override,
       retry,
     });
+    console.log('createdJob', createdJob)
     await this.queueRepo.add(endpoint, tokenId);
 
     return JobsRepo.toJobDTO(createdJob);
@@ -246,14 +254,17 @@ export class JobsRepo implements Closable {
   ) {
     const deleted: string[] = [];
 
-    const queues = await this.queueRepo.get(tokenId);
+    const queues = await this.queueRepo.get(tokenId); // `queues:by-token:${tokenId}` の形式で取得
     const queuesOnSameDeployment = queues.filter((q) => q.startsWith(baseUrl));
+    console.log('crons', crons)
+    console.log('queues', queues);
+    console.log('queuesOnSameDeployment', queuesOnSameDeployment)
 
     if (!dryRun) {
       await Promise.all(
         crons.map(async ({ route, schedule, timezone }) => {
-          await this.enqueue(
-            tokenId,
+          await this.enqueue( // 1. detectしたcronsをenqueue, jobs:local;http%3A%2F%2Fapp%3A3000%2Fapi%2Fjobs%2FsoftDeleteOldProjectAndConcilDocuments:@cron のkey // 実行されたら消える？, decode 1回
+            tokenId, // 2. queues:by-token:local のkey, 値は, http://app:3000/api/jobs/softDeleteOldProjectAndConcilDocuments, プロセスで保持していて、初回だけ保存
             `${config.withoutTrailingSlash(
               baseUrl
             )}/${config.withoutLeadingSlash(route)}`,
@@ -268,14 +279,23 @@ export class JobsRepo implements Closable {
       );
     }
 
-    const routesThatShouldPersist = crons.map((c) => c.route);
+    const routesThatShouldPersist = crons.map((c) => c.route[0] === '/' ? c.route.slice(1) : c.route );
+    console.log('routesThatShouldPersist', routesThatShouldPersist) // api/jobs/deleteOldProjectsAndLetters
     await Promise.all(
       queuesOnSameDeployment.map(async (queue) => {
-        const route = queue.slice(baseUrl.length);
+        // 既にjobとして追加されていて、今回でもjobとしてdetectされた原因は、
+        // crons中のrouteでは、文頭の / がないのに、
+        // 下の行で queue.slice しているbaseUrlに / が含まれていないので、routeに / が含まれてしまっているため
+        // 本番環境の挙動が予測できないので、２つを比較するときに、cronsのrouteもqueueから切り出したrouteも頭に / がある時は削除してから比較する
+        // そもそも何故このようなことになっているかは不明
+        const unCleansingRoute = queue.slice(baseUrl.length)
+        const route = unCleansingRoute[0] === '/' ? unCleansingRoute.slice(1) : unCleansingRoute;
+        console.log('match routesThatShouldPersist route', route) // /api/jobs/softDeleteOldProjectAndConcilDocuments
         const shouldPersist = routesThatShouldPersist.includes(route);
         if (shouldPersist) {
           return;
         }
+        console.log('NotShouldPersist', queue)
 
         if (dryRun) {
           const exists = await this.findById(tokenId, queue, "@cron");
@@ -283,6 +303,7 @@ export class JobsRepo implements Closable {
             deleted.push(queue);
           }
         } else {
+          // jobs:local;http%3A%2F%2Fapp%3A3000%2Fapi%2Fjobs%2FsoftDeleteOldProjectAndConcilDocuments:@cron のkeyを削除している可能性が高い
           const result = await this.delete(tokenId, queue, "@cron");
           if (result === "deleted") {
             deleted.push(queue);

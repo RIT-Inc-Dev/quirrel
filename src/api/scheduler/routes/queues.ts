@@ -329,6 +329,8 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
         return reply.status(400).send("invalid timezone");
       }
 
+      console.log('tokenId', tokenId)
+      console.log('body', body)
       const response = await jobsRepo.updateCron(tokenId, body);
 
       fastify.logger?.cronUpdated(body, response.deleted);

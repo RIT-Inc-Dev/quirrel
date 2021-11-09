@@ -9,6 +9,7 @@ export function idempotent<Args extends any[]>(
 
   return async (...args: Args) => {
     const key = keyBy(...args);
+    console.log('queue-repo itempotent exutedkeys', executedKeys)
     if (executedKeys.has(key)) {
       return;
     }
@@ -27,6 +28,9 @@ export class QueueRepo {
   private isMigrated = process.env.SKIP_QUEUE_REPO_MIGRATION === "true";
 
   public add = idempotent(async (endpoint: string, tokenId: string) => {
+    console.log('queue-repo add', tokenId) // encordedされてない, 追加されないケース
+    console.log('queue-repo endpoint', endpoint) // encordedされてないケース, 追加されないケース
+    console.log(`queues:by-token:${tokenId}`)
     await this.redis.sadd(`queues:by-token:${tokenId}`, endpoint);
   });
 
