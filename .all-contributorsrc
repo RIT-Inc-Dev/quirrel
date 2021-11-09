@@ -114,6 +114,35 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "fiddep",
+      "name": "Fredrik Palmquist",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12913309?v=4",
+      "profile": "https://github.com/fiddep",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "alizahid",
+      "name": "Ali Zahid",
+      "avatar_url": "https://avatars.githubusercontent.com/u/941775?v=4",
+      "profile": "https://alizahid.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jakobo",
+      "name": "Jakob Heuser",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1795?v=4",
+      "profile": "https://codedrift.com",
+      "contributions": [
+        "code",
+        "bug",
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7,
