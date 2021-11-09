@@ -5,11 +5,12 @@
     "email": "simon@quirrel.dev",
     "url": "https://quirrel.dev"
   },
-  "repository": "quirrel-dev/quirrel",
+  "repository": "RIT-Inc-Dev/quirrel",
   "homepage": "https://quirrel.dev",
   "license": "MIT",
   "files": [
     "dist",
+    "src",
     "*.d.ts",
     "*.cjs",
     "*.js",
@@ -19,7 +20,7 @@
   ],
   "main": "dist/cjs/src/index.js",
   "module": "dist/esm/src/index.js",
-  "version": "1.7.4",
+  "version": "1.7.4-rit-3",
   "engines": {
     "node": "12 || 14 || 15 || 16 || 17"
   },
