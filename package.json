@@ -1,5 +1,8 @@
 {
-  "name": "quirrel",
+  "name": "@rit-inc-dev/quirrel",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "author": {
     "name": "Simon Knott",
     "email": "simon@quirrel.dev",
