@@ -38,7 +38,12 @@ export async function runQuirrelDev(
 
   const quirrel = await runQuirrel({
     ...config,
-    redisFactory: createRedisFactory(redisUrl),
+    redisFactory: createRedisFactory(redisUrl, {
+      tlsCa: {
+        base64: process.env.REDIS_TLS_CA_BASE64,
+        path: process.env.REDIS_TLS_CA_FILE,
+      },
+    }),
   });
 
   let cronDetector: CronDetector | undefined;
@@ -51,7 +56,7 @@ export async function runQuirrelDev(
       }
 
       await quirrel.server.app.jobs.updateCron("anonymous", {
-        baseUrl: getApplicationBaseUrl(),
+        baseUrl: getApplicationBaseUrl(config.host),
         crons: jobs,
       });
     });
@@ -69,7 +74,8 @@ export default function registerRun(program: Command) {
     .option("-h, --host <host>", "host to bind on", "localhost")
     .option("-p, --port <port>", "port to bind on", "9181")
     .option("-r, --redis-url <redis-url>", "enables the redis backend")
-    .option("--no-cron", "Disable cron job detection", false)
+    .option("-q, --quiet", "silences welcome message, condenses output", false)
+    .option("--no-cron", "Disable cron job detection")
     .option(
       "--passphrase <passphrase>",
       "secure the server with a passphrase",
@@ -82,12 +88,14 @@ export default function registerRun(program: Command) {
         host,
         port,
         cron,
+        quiet,
       }: {
         redisUrl?: string;
         passphrase: string[];
         host: string;
         port: string;
         cron: boolean;
+        quiet: boolean;
       }) => {
         const exit = await runQuirrelDev({
           redisUrl,
@@ -96,7 +104,7 @@ export default function registerRun(program: Command) {
           host,
           port: Number(port),
           disableTelemetry: Boolean(process.env.DISABLE_TELEMETRY),
-          logger: "dx",
+          logger: quiet ? "quiet" : "dx",
         });
 
         process.on("SIGINT", async () => {

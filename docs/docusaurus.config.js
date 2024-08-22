@@ -18,8 +18,22 @@ module.exports = {
   themeConfig: {
     announcementBar: {
       id: "supportus",
-      content:
-        '⭐️ If you like Quirrel, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/quirrel-dev/quirrel">GitHub</a>! ⭐️',
+      backgroundColor: "#2250F4",
+      isCloseable: false,
+      textColor: "white",
+      content: `
+        <div style="font-weight: 700; margin: 2px;">
+          <img
+            src="https://www.netlify.com/v3/img/components/logomark-dark.svg"
+            className="h-5 w-5 mr-2 text-blue-300"
+            style="vertical-align: middle; width: 1.25rem; margin-bottom: 1px; margin-right: 3px;"
+            alt="netlify logo"
+          />
+          <span >
+          Quirrel joins Netlify. <a target="_blank" rel="noopener noreferrer" href="https://dev.to/quirrel/quirrel-is-acquired-and-i-am-joining-netlify-dha">Learn more</a>
+          </span>
+        </div>
+        `,
     },
     prism: {
       theme: require("prism-react-renderer/themes/github"),
@@ -27,6 +41,7 @@ module.exports = {
     },
     algolia: {
       apiKey: "2847a8b1da250cce60314892409484d8",
+      appId: "BH4D9OD16A",
       indexName: "quirrel-next",
       searchParameters: {}, // Optional (if provided by Algolia)
     },
@@ -75,7 +90,7 @@ module.exports = {
             },
             {
               label: "Deploy",
-              to: "/deploying",
+              to: "/deployment/connecting",
             },
           ],
         },

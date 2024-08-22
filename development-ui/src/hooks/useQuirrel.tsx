@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { BaseLayout } from "../layouts/BaseLayout";
-import { QuirrelClient, Job } from "quirrel/client";
+import { QuirrelClient, Job } from "../../../client";
 import { produce } from "immer";
 import { getConnectionDetailsFromHash } from "../lib/encrypted-connection-details";
 import { ConfigContext } from "..";
@@ -246,6 +246,7 @@ function useQuirrelClient() {
         return new QuirrelClient({
           async handler() {},
           route: withoutBeginningSlash(withoutTrailingSlash(url.pathname)),
+          fetch: window.fetch.bind(window),
           config: {
             applicationBaseUrl: url.origin,
             encryptionSecret: instanceDetails.encryptionSecret,
@@ -291,6 +292,7 @@ function useQuirrelClient() {
 async function isHealthy(
   baseUrl: string
 ): Promise<{ isHealthy: boolean; stopPolling?: boolean }> {
+  baseUrl = withoutTrailingSlash(baseUrl);
   const connectsToLocalhost = baseUrl.includes("localhost");
   try {
     const res = await fetch(baseUrl + "/health");
@@ -449,7 +451,7 @@ export function QuirrelProvider(props: PropsWithChildren<{}>) {
       const result = await loadInitialJobs(getClient);
       if (result === "unauthorized") {
         window.alert(
-          "Connection couldn't be established, you're unauthorized. Please check the token."
+          "Please authenticate with your QUIRREL_TOKEN via the top-left connection menu."
         );
         return "stopPolling";
       }

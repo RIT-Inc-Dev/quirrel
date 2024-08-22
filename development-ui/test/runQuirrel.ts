@@ -1,14 +1,21 @@
-import { QuirrelClient, runQuirrel as _runQuirrel } from "quirrel";
+import { QuirrelClient, runQuirrel as _runQuirrel } from "../../";
 import IORedis from "ioredis-mock";
 import http from "http";
 
+function getRandomPort() {
+  return 3000 + Math.floor(Math.random() * 1000);
+}
+
 export async function runQuirrel({ port = 9181 }: { port?: number } = {}) {
-  const ioredis = new IORedis();
+  const ioredis = new IORedis({
+    port: getRandomPort(),
+  });
   const quirrelServer = await _runQuirrel({
+    host: "localhost",
     port,
     logger: "none",
     redisFactory: () => {
-      return ioredis.createConnectedClient() as any;
+      return ioredis.duplicate() as any;
     },
   });
 
@@ -20,7 +27,7 @@ export async function runQuirrel({ port = 9181 }: { port?: number } = {}) {
     },
     route: "",
     config: {
-      applicationBaseUrl: "http://localhost:5000",
+      applicationBaseUrl: "http://localhost:6000",
       quirrelBaseUrl: "http://localhost:" + port,
     },
   });
@@ -42,7 +49,7 @@ export async function runQuirrel({ port = 9181 }: { port?: number } = {}) {
         res.end();
       });
     })
-    .listen(5000);
+    .listen(6000);
 
   return {
     client,

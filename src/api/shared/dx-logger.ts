@@ -3,7 +3,7 @@ import chalk from "chalk";
 import { JobDTO } from "../../client/job";
 import { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
 
-function getQueueName(endpoint: string) {
+export function getQueueName(endpoint: string) {
   return new URL(endpoint).pathname;
 }
 
@@ -16,7 +16,7 @@ export class DxLogger implements Logger {
 Welcome to the Quirrel development server.
 
 Open your browser and go to
-    {yellow https://ui.quirrel.dev}
+    {yellow http://${address}}
 to get a better overview over pending jobs.
 ${
   telemetryEnabled

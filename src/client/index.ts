@@ -6,6 +6,7 @@ import Encryptor from "secure-e2ee";
 import { symmetric, asymmetric } from "secure-webhooks";
 import ms from "ms";
 import fetch from "cross-fetch";
+import fetchRetry from "@vercel/fetch-retry";
 import type { IncomingHttpHeaders } from "http";
 import pack from "../../package.json";
 import * as EnhancedJSON from "./enhanced-json";
@@ -22,13 +23,24 @@ export interface JobMeta
   readonly nextRepetition?: Date;
 }
 
+export type QuirrelLogger<Payload = unknown> = {
+  receivedJob: (route: string, data: Payload) => void;
+  processingError: (route: string, data: Payload, error: unknown) => void;
+};
+
+const defaultLogger: QuirrelLogger = {
+  receivedJob: (route, data) => console.log(`Received job to ${route}`, data),
+  processingError: (route, data, error) =>
+    console.error(`Error in job at ${route}`, data, error),
+};
+
 export type QuirrelJobHandler<T> = (job: T, meta: JobMeta) => Promise<void>;
 export type DefaultJobOptions = Pick<EnqueueJobOptions, "exclusive" | "retry">;
 
 interface CreateQuirrelClientArgs<T> {
   route: string;
   handler: QuirrelJobHandler<T>;
-  defaultJobOptions?: DefaultJobOptions;
+  options?: QuirrelOptions<T>;
   config?: {
     /**
      * Recommended way to set this: process.env.QUIRREL_BASE_URL
@@ -43,11 +55,21 @@ interface CreateQuirrelClientArgs<T> {
     quirrelBaseUrl?: string;
 
     /**
+     * Same as quirrelBaseUrl, for migrating.
+     */
+    quirrelOldBaseUrl?: string;
+
+    /**
      * Bearer Secret for authenticating with Quirrel.
      * Obtain on quirrel.dev or using the API of a self-hosted instance.
      * Recommended way to set this: process.env.QUIRREL_TOKEN
      */
     token?: string;
+
+    /**
+     *  Same as token, for migrating.
+     */
+    oldToken?: string;
 
     /**
      * Secret used for end-to-end encryption.
@@ -126,10 +148,6 @@ const EnqueueJobOptionsSchema = z.object({
 
 type EnqueueJobOptionsSchema = z.TypeOf<typeof EnqueueJobOptionsSchema>;
 
-type EnqueueJobOptionssSchemaMatchesDocs = AssertTrue<
-  IsExact<EnqueueJobOptions, EnqueueJobOptionsSchema>
->;
-
 /**
  * @deprecated renamed to EnqueueJobOptions
  */
@@ -139,7 +157,6 @@ export interface EnqueueJobOptions {
   /**
    * Can be used to make a job easier to manage.
    * If there's already a job with the same ID, this job will be trashed.
-   * @tutorial https://demo.quirrel.dev/managed
    */
   id?: string;
 
@@ -239,22 +256,30 @@ function getAuthHeaders(
   return { Authorization: `Bearer ${token}` };
 }
 
+export interface QuirrelOptions<T = unknown> extends DefaultJobOptions {
+  logger?: QuirrelLogger<T>;
+}
+
 export class QuirrelClient<T> {
   private handler;
   private route;
   private defaultJobOptions;
   private encryptor;
   private defaultHeaders: Record<string, string>;
+  private oldDefaultHeaders: Record<string, string>;
   private quirrelBaseUrl;
+  private quirrelOldBaseUrl;
+  private quirrelOldToken;
   private applicationBaseUrl;
   private token;
   private fetch;
   private catchDecryptionErrors;
   private signaturePublicKey;
+  private logger: QuirrelLogger<T>;
 
   constructor(args: CreateQuirrelClientArgs<T>) {
     this.handler = args.handler;
-    this.defaultJobOptions = args.defaultJobOptions;
+    this.defaultJobOptions = args.options;
 
     const token = args.config?.token ?? config.getQuirrelToken();
     this.defaultHeaders = {
@@ -262,6 +287,7 @@ export class QuirrelClient<T> {
       "X-QuirrelClient-Version": pack.version,
     };
 
+    this.logger = args.options?.logger ?? defaultLogger;
     const quirrelBaseUrl =
       args.config?.quirrelBaseUrl ?? config.getQuirrelBaseUrl();
     this.applicationBaseUrl = config.withoutTrailingSlash(
@@ -272,12 +298,19 @@ export class QuirrelClient<T> {
     this.quirrelBaseUrl = quirrelBaseUrl;
     this.token = args.config?.token ?? config.getQuirrelToken();
     this.route = config.withoutLeadingSlash(args.route);
+    this.quirrelOldBaseUrl =
+      args.config?.quirrelOldBaseUrl ?? config.getOldQuirrelBaseUrl();
+    this.quirrelOldToken = args.config?.oldToken ?? config.getOldQuirrelToken();
+    this.oldDefaultHeaders = {
+      ...getAuthHeaders(this.quirrelOldToken),
+      "X-QuirrelClient-Version": pack.version,
+    };
     this.encryptor = getEncryptor(
       args.config?.encryptionSecret ?? config.getEncryptionSecret(),
       args.config?.oldSecrets ?? config.getOldEncryptionSecrets() ?? undefined
     );
     this.catchDecryptionErrors = args.catchDecryptionErrors;
-    this.fetch = args.fetch ?? fetch;
+    this.fetch = args.fetch ?? fetchRetry(fetch);
     this.signaturePublicKey =
       args.config?.signaturePublicKey ?? config.getSignaturePublicKey();
   }
@@ -287,6 +320,18 @@ export class QuirrelClient<T> {
       this.quirrelBaseUrl +
       "/queues/" +
       encodeURIComponent(encodeURIComponent(this.applicationBaseUrl + "/" + this.route))
+    );
+  }
+
+  private get oldBaseUrl() {
+    if (!this.quirrelOldBaseUrl) {
+      return undefined;
+    }
+
+    return (
+      this.quirrelOldBaseUrl +
+      "/queues/" +
+      encodeURIComponent(this.applicationBaseUrl + "/" + this.route)
     );
   }
 
@@ -311,6 +356,10 @@ export class QuirrelClient<T> {
 
     if (options.repeat && options.retry?.length) {
       throw new Error("retry and repeat cannot be used together");
+    }
+
+    if (options.override && !options.id) {
+      throw new Error("override requires id");
     }
 
     options = EnqueueJobOptionsSchema.parse(options);
@@ -368,6 +417,15 @@ export class QuirrelClient<T> {
   async enqueue(payload: T, options: EnqueueJobOptions = {}): Promise<Job<T>> {
     const body = await this.payloadAndOptionsToBody(payload, options);
 
+    if (this.oldBaseUrl && !options.override && options.id) {
+      const res = await this.fetchAgainstOld(
+        `/${encodeURIComponent(options.id)}`
+      );
+      if (res.status === 200) {
+        return await this.toJob(await res.json());
+      }
+    }
+
     const res = await this.fetch(this.baseUrl, {
       method: "POST",
       headers: {
@@ -379,10 +437,20 @@ export class QuirrelClient<T> {
     });
 
     if (res.status === 201) {
+      if (this.oldBaseUrl && options.override && options.id) {
+        await this.fetchAgainstOld(`/${encodeURIComponent(options.id)}`, {
+          method: "DELETE",
+        });
+      }
+
       return await this.toJob(await res.json());
     }
 
-    throw new Error(`Unexpected response: ${await res.text()}`);
+    throw new Error(
+      `Unexpected response while trying to enqueue "${JSON.stringify(
+        body
+      )}" to ${this.applicationBaseUrl}: ${await res.text()}`
+    );
   }
 
   /**
@@ -412,7 +480,11 @@ export class QuirrelClient<T> {
       return await Promise.all(response.map((job) => this.toJob(job)));
     }
 
-    throw new Error(`Unexpected response: ${await res.text()}`);
+    throw new Error(
+      `Unexpected response while trying to enqueue "${body}" to ${
+        this.applicationBaseUrl
+      }: ${await res.text()}`
+    );
   }
 
   private async decryptAndDecodeBody(body: string): Promise<T> {
@@ -460,9 +532,7 @@ export class QuirrelClient<T> {
     let cursor: number | null = 0;
 
     while (cursor !== null) {
-      const res = await this.fetch(this.baseUrl + "?cursor=" + cursor, {
-        headers: this.defaultHeaders,
-      });
+      const res = await this.fetchAgainstCurrent("?cursor=" + cursor);
 
       const json = await res.json();
 
@@ -475,16 +545,69 @@ export class QuirrelClient<T> {
 
       yield await Promise.all(jobs.map((dto) => this.toJob(dto)));
     }
+
+    if (this.quirrelOldBaseUrl) {
+      let cursor: number | null = 0;
+
+      while (cursor !== null) {
+        const res = await this.fetchAgainstOld("?cursor=" + cursor);
+
+        const json = await res.json();
+
+        const { cursor: newCursor, jobs } = json as {
+          cursor: number | null;
+          jobs: JobDTO[];
+        };
+
+        cursor = newCursor;
+
+        yield await Promise.all(jobs.map((dto) => this.toJob(dto)));
+      }
+    }
   }
+
+  private fetchAgainstCurrent: typeof fetch = async (input, init) => {
+    return await this.fetch(this.baseUrl + input, {
+      ...init,
+      headers: {
+        ...this.defaultHeaders,
+        ...init?.headers,
+      },
+    });
+  };
+
+  private fetchAgainstOld: typeof fetch = async (input, init) => {
+    if (!this.oldBaseUrl) {
+      throw new Error("only call when oldBaseUrl is defined");
+    }
+    return await this.fetch(this.oldBaseUrl + input, {
+      ...init,
+      headers: {
+        ...this.oldDefaultHeaders,
+        ...init?.headers,
+      },
+    });
+  };
+
+  private fetchAndRetryNotFound: typeof fetch = async (input, init) => {
+    const res = await this.fetchAgainstCurrent(input, init);
+    if (!this.oldBaseUrl) {
+      return res;
+    }
+
+    if (res.status !== 404) {
+      return res;
+    }
+
+    return await this.fetchAgainstOld(input, init);
+  };
 
   /**
    * Get a specific job.
    * @returns null if no job was found.
    */
   async getById(id: string): Promise<Job<T> | null> {
-    const res = await this.fetch(this.baseUrl + "/" + encodeURIComponent(id), {
-      headers: this.defaultHeaders,
-    });
+    const res = await this.fetchAndRetryNotFound("/" + encodeURIComponent(id));
 
     if (res.status === 404) {
       return null;
@@ -502,9 +625,8 @@ export class QuirrelClient<T> {
    * @returns false if job could not be found.
    */
   async invoke(id: string): Promise<boolean> {
-    const res = await this.fetch(this.baseUrl + "/" + encodeURIComponent(id), {
+    const res = await this.fetchAndRetryNotFound("/" + encodeURIComponent(id), {
       method: "POST",
-      headers: this.defaultHeaders,
     });
 
     if (res.status === 404) {
@@ -523,9 +645,8 @@ export class QuirrelClient<T> {
    * @returns false if job could not be found.
    */
   async delete(id: string): Promise<boolean> {
-    const res = await this.fetch(this.baseUrl + "/" + encodeURIComponent(id), {
+    const res = await this.fetchAndRetryNotFound("/" + encodeURIComponent(id), {
       method: "DELETE",
-      headers: this.defaultHeaders,
     });
 
     if (res.status === 404) {
@@ -543,7 +664,10 @@ export class QuirrelClient<T> {
     if (this.signaturePublicKey) {
       return asymmetric.verify(body, this.signaturePublicKey, signature);
     } else {
-      return symmetric.verify(body, this.token!, signature);
+      return (
+        symmetric.verify(body, this.token!, signature) ||
+        symmetric.verify(body, this.quirrelOldToken ?? "", signature)
+      );
     }
   }
 
@@ -579,7 +703,7 @@ export class QuirrelClient<T> {
       (headers["x-quirrel-meta"] as string) ?? "{}"
     );
 
-    console.log(`Received job to ${this.route}: `, payload);
+    this.logger.receivedJob(this.route, payload);
 
     try {
       await this.handler(payload, {
@@ -596,7 +720,7 @@ export class QuirrelClient<T> {
         body: "OK",
       };
     } catch (error) {
-      console.error(error);
+      this.logger.processingError(this.route, payload, error);
       return {
         status: 500,
         headers: {},

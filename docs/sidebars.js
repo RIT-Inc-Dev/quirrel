@@ -7,7 +7,18 @@ module.exports = {
       collapsed: false,
       items: ["getting-started/next-js", "getting-started/blitz-js"],
     },
-    "deploying",
+    "development",
+    {
+      type: "category",
+      label: "Deployment",
+      collapsed: false,
+      items: [
+        "deployment/connecting",
+        "deployment/docker",
+        "deployment/railway",
+        "deployment/fly",
+      ],
+    },
     {
       type: "category",
       label: "Recipes",
@@ -20,8 +31,10 @@ module.exports = {
       ],
     },
     "migrating-to-v1",
+    "migrating-servers",
     "how-quirrel-works",
     "faq",
+    "netlify-acquisition-faq",
   ],
   docs: [
     {
@@ -39,6 +52,7 @@ module.exports = {
         "api/blitz",
         "api/redwood",
         "api/netlify",
+        "api/remix",
         "api/sveltekit",
         "api/nuxt",
         "api/express",

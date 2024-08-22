@@ -1,20 +1,27 @@
 ---
-title: Next.js
+title: Remix
 ---
 
-```ts title="pages/api/someQueue.ts"
-import { Queue } from "quirrel/next";
+```ts title="app/queues/someQueue.server.ts"
+import { Queue } from "quirrel/remix";
 
 export default Queue(
-"api/someQueue",
+  "queues/someQueue",
   async (job, meta) => {
     // do something
-  }
+  },
 );
 ```
 
+```ts title="app/routes/queues/someQueue.ts"
+import someQueue from "~/queues/someQueue.server";
+
+export const action = someQueue;
+```
+
 Creates a new Queue.
-Make sure to export it from an [API Route](https://nextjs.org/docs/api-routes/introduction), otherwise it won't work.
+Make sure to export it first from a file with the `.server` extension before the file type so it gets picked up by the server code pruning.
+Then export it from a [route action](https://remix.run/docs/en/v1/api/conventions#action), otherwise it won't work.
 
 #### Parameters
 

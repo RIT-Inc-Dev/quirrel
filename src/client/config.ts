@@ -59,8 +59,22 @@ export function getQuirrelBaseUrl(): string | undefined {
   return isProduction() ? "https://api.quirrel.dev" : "http://localhost:9181";
 }
 
+export function getOldQuirrelBaseUrl(): string | undefined {
+  const fromEnvironment =
+    process.env.QUIRREL_MIGRATE_OLD_API_URL ?? process.env.QUIRREL_MIGRATE_OLD_URL;
+  if (fromEnvironment) {
+    return normalisedURL(fromEnvironment);
+  }
+
+  return undefined;
+}
+
 export function getQuirrelToken(): string | undefined {
   return process.env.QUIRREL_TOKEN;
+}
+
+export function getOldQuirrelToken(): string | undefined {
+  return process.env.QUIRREL_MIGRATE_OLD_TOKEN;
 }
 
 export function getEncryptionSecret(): string | undefined {
@@ -75,15 +89,17 @@ export function getOldEncryptionSecrets(): string[] | null {
   return JSON.parse(process.env.QUIRREL_OLD_SECRETS ?? "null");
 }
 
-let developmentApplicationBaseUrl: string | undefined;
+let developmentApplicationPort: number | undefined;
 
 function getNetlifyURL() {
-  const { SITE_ID, NETLIFY_DEV, DEPLOY_URL } = process.env;
-  if (SITE_ID) {
-    return SITE_ID + ".netlify.app";
+  const siteId = process.env.SITE_ID;
+  const netlifyDev = process.env.NETLIFY_DEV;
+  const deployUrl = process.env.DEPLOY_URL;
+  if (siteId) {
+    return siteId + ".netlify.app";
   } else {
-    if (NETLIFY_DEV) {
-      return DEPLOY_URL;
+    if (netlifyDev) {
+      return deployUrl;
     }
   }
 }
@@ -92,12 +108,12 @@ function getVercelURL() {
   return process.env.VERCEL_URL;
 }
 
-export function getApplicationBaseUrl(): string {
+export function getApplicationBaseUrl(host = "localhost"): string {
   const baseUrl =
     resolveEnvReference("QUIRREL_BASE_URL") ||
     getNetlifyURL() ||
     getVercelURL() ||
-    developmentApplicationBaseUrl;
+    `http://${host}:${developmentApplicationPort}`;
 
   if (!baseUrl) {
     throw new Error("Please specify QUIRREL_BASE_URL.");
@@ -107,17 +123,17 @@ export function getApplicationBaseUrl(): string {
 }
 
 export function registerDevelopmentDefaults({
-  applicationBaseUrl,
+  applicationPort,
 }: {
-  applicationBaseUrl: string;
+  applicationPort: number;
 }) {
   if (isProduction()) {
     return;
   }
 
-  if (developmentApplicationBaseUrl) {
+  if (developmentApplicationPort) {
     return;
   }
 
-  developmentApplicationBaseUrl = applicationBaseUrl;
+  developmentApplicationPort = applicationPort;
 }

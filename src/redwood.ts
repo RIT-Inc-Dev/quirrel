@@ -5,18 +5,30 @@ import {
   Job,
   DefaultJobOptions,
   QuirrelJobHandler,
+  QuirrelOptions,
 } from "./client";
 import { registerDevelopmentDefaults } from "./client/config";
 
-export { Job, EnqueueJobOpts, EnqueueJobOptions, DefaultJobOptions, QuirrelJobHandler };
+export {
+  Job,
+  EnqueueJobOpts,
+  EnqueueJobOptions,
+  DefaultJobOptions,
+  QuirrelJobHandler,
+};
 
 registerDevelopmentDefaults({
-  applicationBaseUrl: "http://localhost:8911",
+  applicationPort: 8911,
 });
+
+function decodeBase64(v: string): string {
+  return Buffer.from(v, "base64").toString("utf8");
+}
 
 interface RedwoodEvent {
   body: string;
   headers: Record<string, string>;
+  isBase64Encoded: boolean;
 }
 
 interface RedwoodResponse {
@@ -33,17 +45,17 @@ export type Queue<Payload> = Omit<
 export function Queue<Payload>(
   route: string,
   handler: QuirrelJobHandler<Payload>,
-  defaultJobOptions?: DefaultJobOptions
+  options?: QuirrelOptions<Payload>,
 ): Queue<Payload> {
   const quirrel = new QuirrelClient<Payload>({
-    defaultJobOptions,
+    options,
     handler,
     route,
   });
 
   async function redwoodHandler(event: RedwoodEvent): Promise<RedwoodResponse> {
     const { body, headers, status } = await quirrel.respondTo(
-      event.body,
+      event.isBase64Encoded ? decodeBase64(event.body) : event.body,
       event.headers
     );
     return {
@@ -74,7 +86,8 @@ export function Queue<Payload>(
 export function CronJob(
   route: string,
   cronSchedule: NonNullable<NonNullable<EnqueueJobOptions["repeat"]>["cron"]>,
-  handler: () => Promise<void>
+  handler: () => Promise<void>,
+  options?: QuirrelOptions
 ) {
-  return Queue(route, handler) as unknown;
+  return Queue(route, handler, options) as unknown;
 }

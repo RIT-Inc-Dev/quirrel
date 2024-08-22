@@ -143,6 +143,82 @@
         "bug",
         "design"
       ]
+    },
+    {
+      "login": "m5r",
+      "name": "Mokhtar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13026820?v=4",
+      "profile": "https://www.mokhtar.dev",
+      "contributions": [
+        "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "leo-guinan",
+      "name": "Leo Guinan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1247152?v=4",
+      "profile": "https://github.com/leo-guinan",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "BrennerSpear",
+      "name": "Brenner Spear",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12127609?v=4",
+      "profile": "https://rainbow.me/brenner.eth",
+      "contributions": [
+        "doc",
+        "bug"
+      ]
+    },
+    {
+      "login": "boredland",
+      "name": "Jonas Strassel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4662748?v=4",
+      "profile": "https://jonas-strassel.de/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "joshnuss",
+      "name": "Joshua Nussbaum",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4437?v=4",
+      "profile": "http://1000experiments.dev",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "mr47",
+      "name": "Dmitry Poddubniy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/651943?v=4",
+      "profile": "https://mr47.in",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "JonathonRP",
+      "name": "Jonathon Reese Perry",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30267655?v=4",
+      "profile": "https://github.com/JonathonRP",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "bamthomas",
+      "name": "Bruno Thomas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/551723?v=4",
+      "profile": "http://blog.iroco.co",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,

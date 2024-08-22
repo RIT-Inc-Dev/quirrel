@@ -150,6 +150,31 @@ export class JobsRepo implements Closable {
     };
   }
 
+  public async queueStatsByTokenId(byTokenId: string) {
+    let cursor = 0;
+
+    const counts: Record<string, number> = {};
+
+    do {
+      const { newCursor, jobs } = await this.producer.scanQueuePattern(
+        encodeQueueDescriptor(byTokenId, "*"),
+        cursor,
+        1000
+      );
+
+      cursor = newCursor;
+
+      for (const job of jobs) {
+        const { endpoint } = decodeQueueDescriptor(job.queue);
+        counts[endpoint] = (counts[endpoint] || 0) + 1;
+      }
+    } while (cursor !== 0);
+
+    return Object.fromEntries(
+      Object.entries(counts).map(([endpoint, count]) => [endpoint, { count }])
+    );
+  }
+
   public async findById(tokenId: string, endpoint: string, id: string) {
     const job = await this.producer.findById(
       encodeQueueDescriptor(tokenId, endpoint),
@@ -165,21 +190,34 @@ export class JobsRepo implements Closable {
     );
   }
 
-  public async emptyQueue(tokenId: string, endpoint: string) {
+  private async emptyByGetter(
+    tokenId: string,
+    getter: (cursor: number) => Promise<{ cursor: number; jobs: JobDTO[] }>
+  ) {
     let cursor = 0;
     const allPromises: Promise<any>[] = [];
     do {
-      const { cursor: newCursor, jobs } = await this.find(tokenId, endpoint, {
-        cursor,
-      });
+      const { cursor: newCursor, jobs } = await getter(cursor);
       cursor = newCursor;
 
       for (const job of jobs) {
-        allPromises.push(this.delete(tokenId, endpoint, job.id));
+        allPromises.push(this.delete(tokenId, job.endpoint, job.id));
       }
     } while (cursor !== 0);
 
     await Promise.all(allPromises);
+  }
+
+  public async emptyQueue(tokenId: string, endpoint: string) {
+    await this.emptyByGetter(tokenId, (cursor) =>
+      this.find(tokenId, endpoint, { cursor })
+    );
+  }
+
+  public async emptyToken(tokenId: string) {
+    await this.emptyByGetter(tokenId, (cursor) =>
+      this.findByTokenId(tokenId, { cursor })
+    );
   }
 
   public async delete(tokenId: string, endpoint: string, id: string) {

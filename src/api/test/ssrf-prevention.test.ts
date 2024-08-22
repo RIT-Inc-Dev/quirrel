@@ -2,7 +2,7 @@ import { run } from "./runQuirrel";
 import fastify, { FastifyInstance } from "fastify";
 import request from "supertest";
 import delay from "delay";
-import { AddressInfo } from "ws";
+import { getAddress } from "../../client/test/util";
 
 describe("SSRF Prevention", () => {
   let server: FastifyInstance;
@@ -17,7 +17,9 @@ describe("SSRF Prevention", () => {
       reply.status(200).send("OK");
     });
 
-    await server.listen(0);
+    await server.listen({
+      port: 0,
+    });
   });
 
   afterAll(async () => {
@@ -33,13 +35,10 @@ describe("SSRF Prevention", () => {
       const quirrel = res.server;
       teardown = res.teardown;
 
-      const address = server.server.address() as AddressInfo;
       await request(quirrel)
         .post(
           "/queues/" +
-            encodeURIComponent(
-              `http://${address.address}:${address.port}/database/drop`
-            )
+            encodeURIComponent(getAddress(server.server) + "/database/drop")
         )
         .send({ body: "dropthebase" })
         .expect(201);
