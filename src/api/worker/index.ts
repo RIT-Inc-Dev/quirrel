@@ -85,6 +85,7 @@ export async function createWorker({
 
     endpoint = decodeURIComponent(endpoint);
 
+    console.log(endpoint);
     const executionDone = logger?.startingExecution({
       tokenId,
       endpoint,
@@ -142,6 +143,7 @@ export async function createWorker({
     });
 
     if (response.status >= 200 && response.status < 300) {
+      console.log(response.status);
       executionDone?.();
 
       telemetrist?.dispatch("dispatch_job");
