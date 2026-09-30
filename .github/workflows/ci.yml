@@ -38,8 +38,6 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - if: ${{ matrix.node-version == 22 }}
-      uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: npm test -- --coverage
