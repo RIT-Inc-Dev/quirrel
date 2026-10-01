@@ -331,7 +331,7 @@ export class QuirrelClient<T> {
     return (
       this.quirrelOldBaseUrl +
       "/queues/" +
-      encodeURIComponent(this.applicationBaseUrl + "/" + this.route)
+      encodeURIComponent(encodeURIComponent(this.applicationBaseUrl + "/" + this.route))
     );
   }
 

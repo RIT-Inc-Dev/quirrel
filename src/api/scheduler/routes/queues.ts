@@ -13,8 +13,7 @@ import { QueuesUpdateCronBody } from "../types/queues/update-cron";
 import { isValidCronExpression } from "../../../shared/is-valid-cron";
 import { isValidTimezone } from "../../../shared/repeat";
 import { JobDTO } from "../../../client/job";
-
-import * as Url from "url";
+import { toPlainEndpoint } from "../../shared/queue-descriptor";
 
 const jobs: FastifyPluginCallback = (fastify, opts, done) => {
   const jobsRepo = fastify.jobs;
@@ -38,9 +37,16 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
     return true;
   }
 
+  // endpoint-params から format: "uri" を外している（Azure対応）ため、
+  // 不正なホスト名（未展開の ${ENV} など）はここで弾く
+  const VALID_HOSTNAME = /^[a-z0-9._-]+$|^\[[a-f0-9:.]+\]$/i;
+
   function isAbsoluteURL(string: string): boolean {
-    const url = Url.parse(string);
-    return Boolean(url.protocol && url.hostname);
+    try {
+      return VALID_HOSTNAME.test(new URL(string).hostname);
+    } catch {
+      return false;
+    }
   }
 
   const baseSchema = {
@@ -181,7 +187,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
           );
       }
 
-      if (!isAbsoluteURL(endpoint)) {
+      if (!isAbsoluteURL(decodeURIComponent(endpoint))) {
         return reply.status(400).send(INVALID_ENDPOINT_ERROR);
       }
 
@@ -220,7 +226,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
         event: "queues listed",
       });
 
-      reply.status(200).send(queues);
+      reply.status(200).send(queues.map(toPlainEndpoint));
     },
   });
 
