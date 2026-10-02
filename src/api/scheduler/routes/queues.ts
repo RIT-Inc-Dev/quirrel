@@ -41,9 +41,12 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
   // 不正なホスト名（未展開の ${ENV} など）はここで弾く
   const VALID_HOSTNAME = /^[a-z0-9._-]+$|^\[[a-f0-9:.]+\]$/i;
 
-  function isAbsoluteURL(string: string): boolean {
+  // endpoint はAzure対応で1回エンコードされた状態で届くため、ここでまとめてデコードする。
+  // decodeURIComponent は "%" 単体のような不正な文字列で例外を投げるので、
+  // 呼び出し側で素の decodeURIComponent を使わずこの関数に一本化する。
+  function isAbsoluteURL(endpoint: string): boolean {
     try {
-      return VALID_HOSTNAME.test(new URL(string).hostname);
+      return VALID_HOSTNAME.test(new URL(decodeURIComponent(endpoint)).hostname);
     } catch {
       return false;
     }
@@ -110,7 +113,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
       const { tokenId, body } = request;
       const { endpoint } = request.params;
 
-      if (!isAbsoluteURL(decodeURIComponent(endpoint))) {
+      if (!isAbsoluteURL(endpoint)) {
         return reply.status(400).send(INVALID_ENDPOINT_ERROR);
       }
 
@@ -187,7 +190,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
           );
       }
 
-      if (!isAbsoluteURL(decodeURIComponent(endpoint))) {
+      if (!isAbsoluteURL(endpoint)) {
         return reply.status(400).send(INVALID_ENDPOINT_ERROR);
       }
 

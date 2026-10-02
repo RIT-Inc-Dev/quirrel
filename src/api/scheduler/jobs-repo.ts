@@ -195,18 +195,22 @@ export class JobsRepo implements Closable {
     );
   }
 
+  // JobDTO(toPlainEndpoint で平文化済み)の endpoint を delete() に渡すと、
+  // 保存時のキー(Azure対応で1回エンコードされている)と一致せず削除できない。
+  // 生のジョブが持つ job.queue (実際の保存キーそのもの)を直接使って削除する。
   private async emptyByGetter(
-    tokenId: string,
-    getter: (cursor: number) => Promise<{ cursor: number; jobs: JobDTO[] }>
+    getter: (
+      cursor: number
+    ) => Promise<{ newCursor: number; jobs: Job<"every" | "cron">[] }>
   ) {
     let cursor = 0;
     const allPromises: Promise<any>[] = [];
     do {
-      const { cursor: newCursor, jobs } = await getter(cursor);
+      const { newCursor, jobs } = await getter(cursor);
       cursor = newCursor;
 
       for (const job of jobs) {
-        allPromises.push(this.delete(tokenId, job.endpoint, job.id));
+        allPromises.push(this.producer.delete(job.queue, job.id));
       }
     } while (cursor !== 0);
 
@@ -214,14 +218,22 @@ export class JobsRepo implements Closable {
   }
 
   public async emptyQueue(tokenId: string, endpoint: string) {
-    await this.emptyByGetter(tokenId, (cursor) =>
-      this.find(tokenId, endpoint, { cursor })
+    await this.emptyByGetter((cursor) =>
+      this.producer.scanQueue(
+        encodeQueueDescriptor(tokenId, endpoint),
+        cursor,
+        1000
+      )
     );
   }
 
   public async emptyToken(tokenId: string) {
-    await this.emptyByGetter(tokenId, (cursor) =>
-      this.findByTokenId(tokenId, { cursor })
+    await this.emptyByGetter((cursor) =>
+      this.producer.scanQueuePattern(
+        encodeQueueDescriptor(tokenId, "*"),
+        cursor,
+        1000
+      )
     );
   }
 
