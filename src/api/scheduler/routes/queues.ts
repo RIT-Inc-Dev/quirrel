@@ -14,6 +14,7 @@ import { isValidCronExpression } from "../../../shared/is-valid-cron";
 import { isValidTimezone } from "../../../shared/repeat";
 import { JobDTO } from "../../../client/job";
 import { toPlainEndpoint } from "../../shared/queue-descriptor";
+import * as LegacyUrl from "url";
 
 const jobs: FastifyPluginCallback = (fastify, opts, done) => {
   const jobsRepo = fastify.jobs;
@@ -48,13 +49,24 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
   // endpoint はAzure対応で1回エンコードされた状態で届くため、ここでまとめてデコードする。
   // decodeURIComponent は "%" 単体のような不正な文字列で例外を投げるので、
   // 呼び出し側で素の decodeURIComponent を使わずこの関数に一本化する。
+  // new URL() は "%65xample.com" のような、ホスト名内のパーセントエンコードも
+  // 正規化して "example.com" にしてしまうが、配送処理(node-fetch)が使う
+  // 古い解析はこの正規化をせず、ホスト名を認識できない。配送時と同じ解析結果に
+  // なることまで確認する。
+  const stripBrackets = (hostname: string) => hostname.replace(/^\[|\]$/g, "");
+
   function isAbsoluteURL(endpoint: string): boolean {
     try {
       const decoded = decodeURIComponent(endpoint);
       if (!HAS_EXPLICIT_AUTHORITY.test(decoded)) {
         return false;
       }
-      return VALID_HOSTNAME.test(new URL(decoded).hostname);
+      const hostname = new URL(decoded).hostname;
+      if (!VALID_HOSTNAME.test(hostname)) {
+        return false;
+      }
+      const deliveryHostname = LegacyUrl.parse(decoded).hostname ?? "";
+      return stripBrackets(hostname) === stripBrackets(deliveryHostname);
     } catch {
       return false;
     }
