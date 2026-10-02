@@ -40,13 +40,21 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
   // endpoint-params から format: "uri" を外している（Azure対応）ため、
   // 不正なホスト名（未展開の ${ENV} など）はここで弾く
   const VALID_HOSTNAME = /^[a-z0-9._-]+$|^\[[a-f0-9:.]+\]$/i;
+  // new URL() は "https:example.com" のような // 抜けの文字列も補って
+  // 解釈してしまうが、配送処理(node-fetch)の古い解析はホスト名を認識できず
+  // 実行時に必ず失敗する。登録時点で明示的な // を要求して弾く。
+  const HAS_EXPLICIT_AUTHORITY = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^/]/;
 
   // endpoint はAzure対応で1回エンコードされた状態で届くため、ここでまとめてデコードする。
   // decodeURIComponent は "%" 単体のような不正な文字列で例外を投げるので、
   // 呼び出し側で素の decodeURIComponent を使わずこの関数に一本化する。
   function isAbsoluteURL(endpoint: string): boolean {
     try {
-      return VALID_HOSTNAME.test(new URL(decodeURIComponent(endpoint)).hostname);
+      const decoded = decodeURIComponent(endpoint);
+      if (!HAS_EXPLICIT_AUTHORITY.test(decoded)) {
+        return false;
+      }
+      return VALID_HOSTNAME.test(new URL(decoded).hostname);
     } catch {
       return false;
     }
