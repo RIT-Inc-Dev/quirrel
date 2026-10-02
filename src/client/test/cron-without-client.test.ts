@@ -2,7 +2,7 @@ import delay from "delay";
 import { fastify } from "fastify";
 import { QuirrelClient } from "..";
 import { run } from "../../api/test/runQuirrel";
-import { getAddress } from "./util";
+import { getAddress, waitUntil } from "./util";
 
 test("cronjob without QuirrelClient", async () => {
   let lastIncident: any = null;
@@ -55,13 +55,11 @@ test("cronjob without QuirrelClient", async () => {
     repeat: { cron: "* * * * *" },
   });
   await job.invoke();
-  await delay(10);
-  expect(callCount).toBe(1);
+  await waitUntil(() => callCount === 1, 2000);
   expect((await quirrelClient.getById("@cron"))?.count).toBe(2);
 
   await job.invoke();
-  await delay(10);
-  expect(callCount).toBe(2);
+  await waitUntil(() => callCount === 2, 2000);
   expect((await quirrelClient.getById("@cron"))?.count).toBe(3);
 
   await job.invoke();
@@ -71,8 +69,7 @@ test("cronjob without QuirrelClient", async () => {
   expect(lastIncident?.incident.body).toContain("exploded");
 
   await job.invoke();
-  await delay(10);
-  expect(callCount).toBe(4);
+  await waitUntil(() => callCount === 4, 2000);
   expect(lastWasError).toBe(false);
   expect((await quirrelClient.getById("@cron"))?.count).toBe(5);
 
