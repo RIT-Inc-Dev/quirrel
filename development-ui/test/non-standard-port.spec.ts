@@ -3,7 +3,7 @@ import { runQuirrel } from "./runQuirrel";
 import {
   expectToShowAttachingToQuirrel,
   expectToShowJobTable,
-} from "./connection-retry.spec";
+} from "./assertions";
 import { test } from "@playwright/test";
 
 let cleanup: (() => Promise<void>)[] = [];

@@ -1,6 +1,6 @@
 import delay from "delay";
 import { runQuirrel } from "./runQuirrel";
-import { expectTableCellToEqual, expectTableToBeEmpty } from "./invoke.spec";
+import { expectTableCellToEqual, expectTableToBeEmpty } from "./assertions";
 import { test } from "@playwright/test";
 
 let cleanup: (() => Promise<void>)[] = [];

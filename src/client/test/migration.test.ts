@@ -2,6 +2,7 @@ import { QuirrelClient } from "..";
 import { symmetric } from "secure-webhooks";
 import { run } from "../../api/test/runQuirrel";
 import { getAddress } from "./util";
+import request from "supertest";
 
 test("migration", async () => {
   process.env.NODE_ENV = "production";
@@ -47,15 +48,26 @@ test("migration read + write", async () => {
   expect(oldToken).toBeDefined();
   expect(newToken).toBeDefined();
 
-  const oldClient = new QuirrelClient({
-    handler: async () => {},
-    route: "",
-    config: {
-      token: oldToken,
-      quirrelBaseUrl: getAddress(oldServer.server),
-      applicationBaseUrl: "unused",
+  // 旧サーバーは、Azure対応(二重エンコード)が入る前のクライアントが書き込んだ
+  // データを持っている想定。QuirrelClientは常に二重エンコードするため、
+  // ここでは本物の旧クライアント相当の、単純エンコードでの直接アクセスを使う。
+  const endpoint = "https://unused/"; // applicationBaseUrl("unused") + route("")
+  const legacyServer = {
+    server: oldServer.server,
+    queuePath: "/queues/" + encodeURIComponent(endpoint),
+    async enqueue(body: unknown, options: Record<string, unknown> = {}) {
+      const res = await request(this.server)
+        .post(this.queuePath)
+        .set("Authorization", `Bearer ${oldToken}`)
+        .send({ body: JSON.stringify(body), delay: 3600000, ...options });
+      return res.body as { id: string };
     },
-  });
+    async fetchById(id: string) {
+      return await request(this.server)
+        .get(`${this.queuePath}/${id}`)
+        .set("Authorization", `Bearer ${oldToken}`);
+    },
+  };
 
   const newClient = new QuirrelClient({
     handler: async () => {},
@@ -70,9 +82,7 @@ test("migration read + write", async () => {
   });
 
   // get: should iterate through both
-  const jobAOnOld = await oldClient.enqueue("a", {
-    delay: "1h",
-  });
+  const jobAOnOld = await legacyServer.enqueue("a");
   await newClient.enqueue("b", {
     delay: "1h",
   });
@@ -86,10 +96,7 @@ test("migration read + write", async () => {
   expect(await newClient.getById(jobAOnOld.id)).toBeTruthy();
 
   // override: false. if job already exists on old instance, let it stay there
-  await oldClient.enqueue("old payload", {
-    id: "foo",
-    delay: "1h",
-  });
+  await legacyServer.enqueue("old payload", { id: "foo" });
   const jobThatAlreadyExists = await newClient.enqueue("new payload", {
     id: "foo",
     delay: "1h",
@@ -112,29 +119,21 @@ test("migration read + write", async () => {
   expect(jobOnNew.status).toBe(200);
 
   // override: true. if job already exists on old instance, it should be deleted
-  await oldClient.enqueue("old payload", {
-    id: "override-true",
-    delay: "1h",
-  });
+  await legacyServer.enqueue("old payload", { id: "override-true" });
   await newClient.enqueue("new payload", {
     id: "override-true",
     delay: "1h",
     override: true,
   });
-  expect(
-    (await (oldClient as any).fetchAgainstCurrent("/override-true")).status
-  ).toBe(404);
+  expect((await legacyServer.fetchById("override-true")).status).toBe(404);
   expect(
     (await (newClient as any).fetchAgainstCurrent("/override-true")).status
   ).toBe(200);
 
   // delete: should run against both instances
-  await oldClient.enqueue("old payload", {
-    id: "delete",
-    delay: "1h",
-  });
+  await legacyServer.enqueue("old payload", { id: "delete" });
   expect(await newClient.delete("delete")).toBe(true);
-  expect(await oldClient.getById("delete")).toBeNull();
+  expect((await legacyServer.fetchById("delete")).status).toBe(404);
 
   await newClient.enqueue("new payload", {
     id: "delete",
@@ -144,10 +143,7 @@ test("migration read + write", async () => {
   expect(await newClient.getById("delete")).toBeNull();
 
   // invoke: should look at both instances
-  await oldClient.enqueue("", {
-    id: "invoke",
-    delay: "1h",
-  });
+  await legacyServer.enqueue("", { id: "invoke" });
   expect(await newClient.invoke("invoke")).toBe(true);
 
   await newClient.enqueue("", {

@@ -2,7 +2,7 @@ import Owl from "@quirrel/owl";
 import { Redis } from "ioredis";
 import { cron, every } from "../../shared/repeat";
 import { IncidentForwarder } from "./incident-forwarder";
-import { decodeQueueDescriptor } from "./queue-descriptor";
+import { decodeQueueDescriptor, toPlainEndpoint } from "./queue-descriptor";
 import { ExecutionError } from "../worker";
 import { Telemetrist } from "./telemetrist";
 import { Logger } from "./logger";
@@ -29,6 +29,7 @@ export async function createOwl(
     logger: logger?.log?.child({ module: "owl" }),
     async onError(ack, job, error: ExecutionError) {
       let { tokenId, endpoint } = decodeQueueDescriptor(job.queue);
+      endpoint = toPlainEndpoint(endpoint);
 
       await incidentForwarder?.dispatch(
         {
