@@ -52,8 +52,20 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
   // new URL() は "%65xample.com" のような、ホスト名内のパーセントエンコードも
   // 正規化して "example.com" にしてしまうが、配送処理(node-fetch)が使う
   // 古い解析はこの正規化をせず、ホスト名を認識できない。配送時と同じ解析結果に
-  // なることまで確認する。
-  const stripBrackets = (hostname: string) => hostname.replace(/^\[|\]$/g, "");
+  // なることまで確認する。ただし古い解析はIPv6を展開形のまま返す(例: "0:0:0:0:0:0:0:1")
+  // ので、new URL() に通して同じ正規化(圧縮形 "::1" 等)を適用してから比較する。
+  function canonicalHostname(hostname: string): string {
+    if (!hostname) {
+      return "";
+    }
+    const isIPv6Literal = hostname.includes(":") && !hostname.startsWith("[");
+    try {
+      return new URL(`http://${isIPv6Literal ? `[${hostname}]` : hostname}`)
+        .hostname;
+    } catch {
+      return hostname;
+    }
+  }
 
   function isAbsoluteURL(endpoint: string): boolean {
     try {
@@ -66,7 +78,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
         return false;
       }
       const deliveryHostname = LegacyUrl.parse(decoded).hostname ?? "";
-      return stripBrackets(hostname) === stripBrackets(deliveryHostname);
+      return hostname === canonicalHostname(deliveryHostname);
     } catch {
       return false;
     }
