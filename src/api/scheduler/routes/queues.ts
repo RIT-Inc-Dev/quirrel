@@ -229,7 +229,9 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
         event: "queues listed",
       });
 
-      reply.status(200).send(queues.map(toPlainEndpoint));
+      // 旧形式(平文)と新形式(エンコード済み)の両方が残っている間は、
+      // 平文に変換すると同じURLが重複しうるので除去する
+      reply.status(200).send([...new Set(queues.map(toPlainEndpoint))]);
     },
   });
 
