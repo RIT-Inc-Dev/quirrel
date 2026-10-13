@@ -592,7 +592,7 @@ describeAcrossBackends("Jobs", (backend) => {
       .expect(400, {
         statusCode: 400,
         error: "Bad Request",
-        message: 'params/endpoint must match format "uri"',
+        message: "endpoint needs to be absolute URL.",
       });
   });
 
@@ -643,8 +643,9 @@ describeAcrossBackends("Jobs", (backend) => {
       }
 
       async function getRunAt() {
+        // QuirrelClient と同じく endpoint を二重エンコードして参照する（Azure対応）
         const job = await request(quirrel).get(
-          `/queues/${endpoint + encodeURIComponent("/")}/@cron`
+          `/queues/${encodeURIComponent(endpoint + encodeURIComponent("/"))}/@cron`
         );
         expect(job.status).toBe(200);
         return new Date(job.body.runAt);
@@ -683,6 +684,29 @@ describeAcrossBackends("Jobs", (backend) => {
           // expect(+runAtJob1 - +runAtJob2).toBeCloseTo(eightHours);
           expect(runAtJob1).not.toEqual(runAtJob2);
         });
+      });
+
+      test("legacy cron with a plain endpoint is replaced", async () => {
+        // 以前の実装で平文の endpoint のまま登録された cron を再現する
+        const legacyPath = `/queues/${endpoint + encodeURIComponent("/")}`;
+        await request(quirrel)
+          .post(legacyPath)
+          .send({
+            id: "@cron",
+            body: "null",
+            override: true,
+            repeat: { cron: "0 5 * * *" },
+          })
+          .expect(201);
+
+        const resp = await registerCron("0 6 * * *", "Etc/UTC");
+        expect(resp.body).toEqual({ deleted: [] });
+
+        const legacyJob = await request(quirrel).get(`${legacyPath}/@cron`);
+        expect(legacyJob.status).toBe(404);
+
+        const runAt = await getRunAt();
+        expect(runAt.getUTCHours()).toBe(6);
       });
     });
   });

@@ -15,7 +15,7 @@ describe("DX", () => {
     describe("in dev mode", () => {
       it("defaults endpoints to http", async () => {
         expect((quirrel as any).baseUrl).toBe(
-          "https://quirrel.mock.com/queues/http%3A%2F%2Fanysite.com%2Fapi%2FsomeAPI"
+          "https://quirrel.mock.com/queues/http%253A%252F%252Fanysite.com%252Fapi%252FsomeAPI"
         );
       });
     });
@@ -34,7 +34,7 @@ describe("DX", () => {
           },
         });
         expect((quirrel as any).baseUrl).toBe(
-          "https://quirrel.mock.com/queues/https%3A%2F%2Fanysite.com%2Fapi%2FsomeAPI"
+          "https://quirrel.mock.com/queues/https%253A%252F%252Fanysite.com%252Fapi%252FsomeAPI"
         );
         process.env.NODE_ENV = oldEnv;
       });

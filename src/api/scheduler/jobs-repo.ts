@@ -3,6 +3,8 @@ import { QueuesUpdateCronBody } from "./types/queues/update-cron";
 import {
   encodeQueueDescriptor,
   decodeQueueDescriptor,
+  isPlainEndpoint,
+  toPlainEndpoint,
 } from "../shared/queue-descriptor";
 import * as uuid from "uuid";
 import { cron, embedTimezone, parseTimezonedCron } from "../../shared/repeat";
@@ -64,7 +66,7 @@ export class JobsRepo implements Closable {
   }
 
   private static toJobDTO(job: Job<"every" | "cron">): JobDTO {
-    const { endpoint } = decodeQueueDescriptor(job.queue);
+    const endpoint = toPlainEndpoint(decodeQueueDescriptor(job.queue).endpoint);
 
     let cron: Pick<NonNullable<JobDTO["repeat"]>, "cron" | "cronTimezone"> = {};
     if (job.schedule?.type === "cron") {
@@ -125,9 +127,10 @@ export class JobsRepo implements Closable {
     return {
       cursor: newCursor,
       jobs: jobs.map((job) => {
-        const { tokenId } = decodeQueueDescriptor(job.queue);
+        const { tokenId, endpoint } = decodeQueueDescriptor(job.queue);
         return {
           ...JobsRepo.toJobDTO(job),
+          endpoint,
           tokenId,
         };
       }),
@@ -165,7 +168,9 @@ export class JobsRepo implements Closable {
       cursor = newCursor;
 
       for (const job of jobs) {
-        const { endpoint } = decodeQueueDescriptor(job.queue);
+        const endpoint = toPlainEndpoint(
+          decodeQueueDescriptor(job.queue).endpoint
+        );
         counts[endpoint] = (counts[endpoint] || 0) + 1;
       }
     } while (cursor !== 0);
@@ -190,18 +195,22 @@ export class JobsRepo implements Closable {
     );
   }
 
+  // JobDTO(toPlainEndpoint で平文化済み)の endpoint を delete() に渡すと、
+  // 保存時のキー(Azure対応で1回エンコードされている)と一致せず削除できない。
+  // 生のジョブが持つ job.queue (実際の保存キーそのもの)を直接使って削除する。
   private async emptyByGetter(
-    tokenId: string,
-    getter: (cursor: number) => Promise<{ cursor: number; jobs: JobDTO[] }>
+    getter: (
+      cursor: number
+    ) => Promise<{ newCursor: number; jobs: Job<"every" | "cron">[] }>
   ) {
     let cursor = 0;
     const allPromises: Promise<any>[] = [];
     do {
-      const { cursor: newCursor, jobs } = await getter(cursor);
+      const { newCursor, jobs } = await getter(cursor);
       cursor = newCursor;
 
       for (const job of jobs) {
-        allPromises.push(this.delete(tokenId, job.endpoint, job.id));
+        allPromises.push(this.producer.delete(job.queue, job.id));
       }
     } while (cursor !== 0);
 
@@ -209,14 +218,22 @@ export class JobsRepo implements Closable {
   }
 
   public async emptyQueue(tokenId: string, endpoint: string) {
-    await this.emptyByGetter(tokenId, (cursor) =>
-      this.find(tokenId, endpoint, { cursor })
+    await this.emptyByGetter((cursor) =>
+      this.producer.scanQueue(
+        encodeQueueDescriptor(tokenId, endpoint),
+        cursor,
+        1000
+      )
     );
   }
 
   public async emptyToken(tokenId: string) {
-    await this.emptyByGetter(tokenId, (cursor) =>
-      this.findByTokenId(tokenId, { cursor })
+    await this.emptyByGetter((cursor) =>
+      this.producer.scanQueuePattern(
+        encodeQueueDescriptor(tokenId, "*"),
+        cursor,
+        1000
+      )
     );
   }
 
@@ -304,17 +321,23 @@ export class JobsRepo implements Closable {
   ) {
     const deleted: string[] = [];
 
+    // Azure対応でクライアントは endpoint を1回エンコードした状態で扱うため、
+    // cron も同じ形で登録する（揃っていないと getById / invoke で見つからない）。
     const queues = await this.queueRepo.get(tokenId);
-    const queuesOnSameDeployment = queues.filter((q) => q.startsWith(baseUrl));
+    const queuesOnSameDeployment = queues.filter((q) =>
+      toPlainEndpoint(q).startsWith(baseUrl)
+    );
 
     if (!dryRun) {
       await Promise.all(
         crons.map(async ({ route, schedule, timezone }) => {
           await this.enqueue(
             tokenId,
-            `${config.withoutTrailingSlash(
-              baseUrl
-            )}/${config.withoutLeadingSlash(route)}`,
+            encodeURIComponent(
+              `${config.withoutTrailingSlash(
+                baseUrl
+              )}/${config.withoutLeadingSlash(route)}`
+            ),
             {
               id: "@cron",
               body: "null",
@@ -331,22 +354,29 @@ export class JobsRepo implements Closable {
       .map(withoutWrappingSlashes);
     await Promise.all(
       queuesOnSameDeployment.map(async (queue) => {
-        const route = withoutWrappingSlashes(queue.slice(baseUrl.length));
+        const plainEndpoint = toPlainEndpoint(queue);
+        const route = withoutWrappingSlashes(
+          plainEndpoint.slice(baseUrl.length)
+        );
         const shouldPersist = routesThatShouldPersist.includes(route);
 
         if (shouldPersist) {
+          // 新しい形式で登録し直したので、旧形式の cron は二重実行を防ぐため削除する
+          if (isPlainEndpoint(queue) && !dryRun) {
+            await this.delete(tokenId, queue, "@cron");
+          }
           return;
         }
 
         if (dryRun) {
           const exists = await this.findById(tokenId, queue, "@cron");
           if (exists) {
-            deleted.push(queue);
+            deleted.push(plainEndpoint);
           }
         } else {
           const result = await this.delete(tokenId, queue, "@cron");
           if (result === "deleted") {
-            deleted.push(queue);
+            deleted.push(plainEndpoint);
           }
         }
       })
@@ -372,7 +402,9 @@ export class JobsRepo implements Closable {
           return;
         }
 
-        const { endpoint } = decodeQueueDescriptor(event.queue);
+        const endpoint = toPlainEndpoint(
+          decodeQueueDescriptor(event.queue).endpoint
+        );
 
         switch (event.type) {
           case "acknowledged":

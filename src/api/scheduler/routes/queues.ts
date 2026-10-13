@@ -13,8 +13,8 @@ import { QueuesUpdateCronBody } from "../types/queues/update-cron";
 import { isValidCronExpression } from "../../../shared/is-valid-cron";
 import { isValidTimezone } from "../../../shared/repeat";
 import { JobDTO } from "../../../client/job";
-
-import * as Url from "url";
+import { toPlainEndpoint } from "../../shared/queue-descriptor";
+import * as LegacyUrl from "url";
 
 const jobs: FastifyPluginCallback = (fastify, opts, done) => {
   const jobsRepo = fastify.jobs;
@@ -38,9 +38,50 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
     return true;
   }
 
-  function isAbsoluteURL(string: string): boolean {
-    const url = Url.parse(string);
-    return Boolean(url.protocol && url.hostname);
+  // endpoint-params から format: "uri" を外している（Azure対応）ため、
+  // 不正なホスト名（未展開の ${ENV} など）はここで弾く
+  const VALID_HOSTNAME = /^[a-z0-9._-]+$|^\[[a-f0-9:.]+\]$/i;
+  // new URL() は "https:example.com" のような // 抜けの文字列も補って
+  // 解釈してしまうが、配送処理(node-fetch)の古い解析はホスト名を認識できず
+  // 実行時に必ず失敗する。登録時点で明示的な // を要求して弾く。
+  const HAS_EXPLICIT_AUTHORITY = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^/]/;
+
+  // endpoint はAzure対応で1回エンコードされた状態で届くため、ここでまとめてデコードする。
+  // decodeURIComponent は "%" 単体のような不正な文字列で例外を投げるので、
+  // 呼び出し側で素の decodeURIComponent を使わずこの関数に一本化する。
+  // new URL() は "%65xample.com" のような、ホスト名内のパーセントエンコードも
+  // 正規化して "example.com" にしてしまうが、配送処理(node-fetch)が使う
+  // 古い解析はこの正規化をせず、ホスト名を認識できない。配送時と同じ解析結果に
+  // なることまで確認する。ただし古い解析はIPv6を展開形のまま返す(例: "0:0:0:0:0:0:0:1")
+  // ので、new URL() に通して同じ正規化(圧縮形 "::1" 等)を適用してから比較する。
+  function canonicalHostname(hostname: string): string {
+    if (!hostname) {
+      return "";
+    }
+    const isIPv6Literal = hostname.includes(":") && !hostname.startsWith("[");
+    try {
+      return new URL(`http://${isIPv6Literal ? `[${hostname}]` : hostname}`)
+        .hostname;
+    } catch {
+      return hostname;
+    }
+  }
+
+  function isAbsoluteURL(endpoint: string): boolean {
+    try {
+      const decoded = decodeURIComponent(endpoint);
+      if (!HAS_EXPLICIT_AUTHORITY.test(decoded)) {
+        return false;
+      }
+      const hostname = new URL(decoded).hostname;
+      if (!VALID_HOSTNAME.test(hostname)) {
+        return false;
+      }
+      const deliveryHostname = LegacyUrl.parse(decoded).hostname ?? "";
+      return hostname === canonicalHostname(deliveryHostname);
+    } catch {
+      return false;
+    }
   }
 
   const baseSchema = {
@@ -104,7 +145,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
       const { tokenId, body } = request;
       const { endpoint } = request.params;
 
-      if (!isAbsoluteURL(decodeURIComponent(endpoint))) {
+      if (!isAbsoluteURL(endpoint)) {
         return reply.status(400).send(INVALID_ENDPOINT_ERROR);
       }
 
@@ -220,7 +261,9 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
         event: "queues listed",
       });
 
-      reply.status(200).send(queues);
+      // 旧形式(平文)と新形式(エンコード済み)の両方が残っている間は、
+      // 平文に変換すると同じURLが重複しうるので除去する
+      reply.status(200).send([...new Set(queues.map(toPlainEndpoint))]);
     },
   });
 

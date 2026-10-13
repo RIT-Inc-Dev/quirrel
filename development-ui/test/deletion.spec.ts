@@ -1,6 +1,6 @@
 import { runQuirrel } from "./runQuirrel";
 import { expect } from "chai";
-import { expectTableCellToEqual, expectTableToBeEmpty } from "./invoke.spec";
+import { expectTableCellToEqual, expectTableToBeEmpty } from "./assertions";
 import delay from "delay";
 import { test } from "@playwright/test";
 
