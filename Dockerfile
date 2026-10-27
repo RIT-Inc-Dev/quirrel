@@ -3,7 +3,7 @@
 # ビルド専用ツールを本番イメージから除くマルチステージ構成
 
 # ---- build stage --------------------------------------------------------
-FROM node:24-bookworm AS build
+FROM node:24.22.1-bookworm AS build
 
 WORKDIR /usr/src/app
 
@@ -18,7 +18,7 @@ COPY . .
 RUN npm run build
 
 # ---- runtime stage -------------------------------------------------------
-FROM node:24-bookworm-slim AS runtime
+FROM node:24.22.1-bookworm-slim AS runtime
 
 ENV NODE_ENV=production
 ENV RUNNING_IN_DOCKER=true
