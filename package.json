@@ -8,7 +8,10 @@
     "email": "simon@quirrel.dev",
     "url": "https://quirrel.dev"
   },
-  "repository": "RIT-Inc-Dev/quirrel",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RIT-Inc-Dev/quirrel.git"
+  },
   "homepage": "https://quirrel.dev",
   "license": "MIT",
   "files": [
