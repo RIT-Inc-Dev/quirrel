@@ -1,16 +1,16 @@
 import bodyParser from "body-parser";
 import connect from "connect";
 import {
-  DefaultJobOptions,
-  EnqueueJobOptions,
-  EnqueueJobOpts,
-  Job,
+  type DefaultJobOptions,
+  type EnqueueJobOptions,
+  type EnqueueJobOpts,
+  type Job,
   QuirrelClient,
-  QuirrelJobHandler,
+  type QuirrelJobHandler,
   type QuirrelOptions,
 } from "./client";
 
-export {
+export type {
   DefaultJobOptions,
   EnqueueJobOptions,
   EnqueueJobOpts,
