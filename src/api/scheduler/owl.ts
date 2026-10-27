@@ -1,5 +1,5 @@
 import type Owl from "@quirrel/owl";
-import type { FastifyPluginCallback } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import { createOwl } from "../shared/owl";
 
@@ -10,12 +10,10 @@ declare module "fastify" {
   }
 }
 
-const owlPlugin: FastifyPluginCallback = async (fastify, _opts, done) => {
+const owlPlugin: FastifyPluginAsync = async (fastify) => {
   const owl = await createOwl(() => fastify.redisFactory(), fastify.logger);
 
   fastify.decorate("owl", owl);
-
-  done();
 };
 
-export default (fp as any)(owlPlugin) as FastifyPluginCallback;
+export default fp(owlPlugin);
