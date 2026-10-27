@@ -30,7 +30,7 @@ test("quirrel ci", async () => {
   });
 
   async function runNext() {
-    await runForDirectory("../../../examples/next");
+    await runForDirectory("../../../test/fixtures/ci/with-cron");
     const job = await client.getById("@cron");
     expect(job?.repeat?.cronTimezone).toBe("Europe/Stockholm");
 
@@ -45,7 +45,7 @@ test("quirrel ci", async () => {
   await runNext();
 
   // has no cron jobs, so it should be deleted
-  await runForDirectory("../../../examples/blitz");
+  await runForDirectory("../../../test/fixtures/ci/without-cron");
   expect(await client.getById("@cron")).toBeNull();
   expect(await greetGarfieldClient.getById("@cron")).toBeNull();
 
@@ -58,7 +58,7 @@ test("quirrel ci migration", async () => {
   });
 
   process.env.QUIRREL_API_URL = getAddress(quirrelOld.server);
-  await runForDirectory("../../../examples/next");
+  await runForDirectory("../../../test/fixtures/ci/with-cron");
 
   const oldCron = await quirrelOld.app.app.jobs.findAll({ cursor: 0 });
   expect(oldCron.cursor).toEqual(0);
@@ -70,7 +70,7 @@ test("quirrel ci migration", async () => {
 
   process.env.QUIRREL_MIGRATE_OLD_API_URL = getAddress(quirrelOld.server);
   process.env.QUIRREL_API_URL = getAddress(quirrelNew.server);
-  await runForDirectory("../../../examples/next");
+  await runForDirectory("../../../test/fixtures/ci/with-cron");
 
   const oldCronEmpty = await quirrelOld.app.app.jobs.findAll({ cursor: 0 });
   expect(oldCronEmpty.cursor).toEqual(0);

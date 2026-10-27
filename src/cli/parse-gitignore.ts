@@ -75,8 +75,8 @@ export function getAllGitIgnores(rootFolder: string) {
   return files.filter(isControlledByUser).map((file) => {
     let prefix = "";
 
-    if (file.match(localRepoIgnore)) prefix = file.split(localRepoIgnore)[0];
-    else if (globalIgnore && file.match(globalIgnore)) prefix = "";
+    if (file.includes(localRepoIgnore)) prefix = file.split(localRepoIgnore)[0];
+    else if (globalIgnore && file.includes(globalIgnore)) prefix = "";
     else prefix = file.split(".gitignore")[0];
 
     return {
