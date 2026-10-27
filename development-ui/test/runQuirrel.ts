@@ -55,7 +55,11 @@ export async function runQuirrel({ port = 9181 }: { port?: number } = {}) {
     client,
     receivedJobs,
     async cleanup() {
-      await quirrelServer.close();
+      const closing = quirrelServer.close();
+      // fastify only closes idle connections; a lingering one from the
+      // browser otherwise blocks close() until the hook times out
+      quirrelServer.httpServer.closeAllConnections();
+      await closing;
       receiver.close();
     },
   };
