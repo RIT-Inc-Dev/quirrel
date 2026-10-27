@@ -2,6 +2,27 @@
 
 # Quirrel
 
+> [!NOTE]
+> This is RIT's internal fork (`@rit-inc-dev/quirrel`, default branch `feature/rit`), published to GitHub Packages and as a Docker image on GHCR.
+
+## Development (RIT fork)
+
+Tool versions (Node.js 24.22.1, Bun) are pinned in `mise.toml`. Bun is the package manager and test runner; the server itself runs on Node.js.
+
+```sh
+mise install
+bun install
+bun run lint        # Biome
+bun run type-check  # tsc for the server and development-ui
+bun run build
+docker run -d --rm -p 6379:6379 redis:7
+REDIS_URL=redis://localhost:6379 bun run test  # bun:test
+```
+
+- `development-ui/` is a separate package (`bun install` there too); its Playwright tests run with `bun run test:ci`.
+- Tests live next to the code as `*.test.ts` / `*.spec.ts` and import from `bun:test`. All test files share one process; `test/setup.ts` restores `process.env` after each test.
+- Use `type` instead of `interface`, except for module augmentation (`declare module "fastify"`).
+
 ---
 
 🎉 Quirrel joins Netlify. [Learn more](https://dev.to/quirrel/quirrel-is-acquired-and-i-am-joining-netlify-dha) 🎉

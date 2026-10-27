@@ -1,3 +1,4 @@
+import { describe, expect, it, test } from "bun:test";
 import * as EnhancedJSON from "./enhanced-json";
 
 describe("EnhancedJSON", () => {

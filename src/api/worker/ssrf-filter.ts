@@ -4,7 +4,7 @@ import http from "node:http";
 import https from "node:https";
 import ipaddr from "ipaddr.js";
 
-function checkIp(ip: string): boolean {
+export function checkIp(ip: string): boolean {
   if (!ipaddr.isValid(ip)) {
     return true;
   }

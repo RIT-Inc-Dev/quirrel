@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import { isValidCronExpression } from "./is-valid-cron";
 
 test(isValidCronExpression.name, () => {

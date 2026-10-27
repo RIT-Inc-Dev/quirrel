@@ -1,3 +1,4 @@
+import { describe, expect, test } from "bun:test";
 import { detectQuirrelCronJob } from "./cron-detector";
 
 const cases: Record<

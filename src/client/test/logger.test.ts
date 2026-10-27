@@ -1,10 +1,19 @@
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from "bun:test";
 import { run } from "../../api/test/runQuirrel";
 import { QuirrelClient } from "..";
 import { getAddress } from "./util";
 
-const errorLogMock = jest.fn();
-const logMock = jest.fn();
-const receiverMock = jest.fn();
+const errorLogMock = mock();
+const logMock = mock();
+const receiverMock = mock();
 
 global.console = {
   ...global.console,
@@ -62,8 +71,8 @@ describe("client logger", () => {
   });
 
   it("allows passing a custom logger function", async () => {
-    const receivedJob = jest.fn();
-    const processingError = jest.fn();
+    const receivedJob = mock();
+    const processingError = mock();
 
     const quirrel = new QuirrelClient<{ result: "success" | "fail" }>({
       route: "",

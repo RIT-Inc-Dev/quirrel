@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import delay from "delay";
 import { fastify } from "fastify";
 import { run } from "../../api/test/runQuirrel";

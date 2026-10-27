@@ -10,7 +10,13 @@
     "downlevelIteration": true,
     "target": "ES2019",
     "module": "CommonJS",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "types": [
+      "node"
+    ],
+    "isolatedModules": true
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ]
 }

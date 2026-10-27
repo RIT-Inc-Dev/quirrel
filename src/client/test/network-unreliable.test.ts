@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import http from "node:http";
 import { QuirrelClient } from "..";
 import { getAddress } from "./util";

@@ -1,22 +1,21 @@
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import spawn from "cross-spawn";
 import { getAllGitIgnores } from "./parse-gitignore";
 
-jest.mock("cross-spawn");
-
-const mockedSpawnSync = spawn.sync as jest.MockedFunction<typeof spawn.sync>;
-
 describe("getAllGitIgnores", () => {
   let tmpDir: string;
+  let mockedSpawnSync: ReturnType<typeof spyOn<typeof spawn, "sync">>;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "quirrel-gitignore-"));
+    mockedSpawnSync = spyOn(spawn, "sync");
   });
 
   afterEach(() => {
-    mockedSpawnSync.mockReset();
+    mockedSpawnSync.mockRestore();
     fs.rmdirSync(tmpDir, { recursive: true });
   });
 

@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, test } from "bun:test";
 import type http from "node:http";
 import request from "supertest";
 import { run } from "./runQuirrel";

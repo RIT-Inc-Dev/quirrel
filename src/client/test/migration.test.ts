@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import { symmetric } from "secure-webhooks";
 import request from "supertest";
 import { run } from "../../api/test/runQuirrel";
@@ -34,6 +35,7 @@ test("migration", async () => {
 });
 
 test("migration read + write", async () => {
+  process.env.NODE_ENV = "production";
   const passphrase = "password";
   const appId = "migration-test";
   const oldServer = await run("Mock", {

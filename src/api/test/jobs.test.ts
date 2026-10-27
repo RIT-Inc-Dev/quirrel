@@ -1,3 +1,12 @@
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  test,
+} from "bun:test";
 import type http from "node:http";
 import delay from "delay";
 import fastify, { type FastifyInstance } from "fastify";

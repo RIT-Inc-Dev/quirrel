@@ -31,13 +31,13 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - uses: jdx/mise-action@v3
-    - run: npm ci
-    - run: npm ci
+    - run: bun install --frozen-lockfile
+    - run: bun install --frozen-lockfile
       working-directory: development-ui
-    - run: npm run lint
-    - run: npm run type-check
-    - run: npm run build
-    - run: npm test -- --coverage
+    - run: bun run lint
+    - run: bun run type-check
+    - run: bun run build
+    - run: bun run test --coverage --coverage-reporter=lcov
     - name: Coveralls Quirrel
       uses: coverallsapp/github-action@master
       with:
@@ -46,9 +46,9 @@ jobs:
         path-to-lcov: coverage/lcov.info
         parallel: true
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
+      run: bunx playwright install --with-deps
       working-directory: development-ui
-    - run: npm run test:ci
+    - run: bun run test:ci
       working-directory: development-ui
     - name: Coveralls Finished
       uses: coverallsapp/github-action@master

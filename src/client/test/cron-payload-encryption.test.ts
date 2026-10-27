@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import * as http from "node:http";
 import delay from "delay";
 import { run } from "../../api/test/runQuirrel";
@@ -8,7 +9,7 @@ test("cron payload with encryption", async () => {
   const server = await run("Mock");
 
   const encryptedBodies: string[] = [];
-  const decryptedBodies: string[] = [];
+  const decryptedBodies: (string | null)[] = [];
 
   let quirrel: QuirrelClient<any>;
 
