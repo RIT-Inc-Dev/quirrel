@@ -52,6 +52,8 @@ export function Queue<Payload>(
     );
 
     res.statusCode = status;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("X-Content-Type-Options", "nosniff");
     for (const [header, value] of Object.entries(headers)) {
       res.setHeader(header, value);
     }
