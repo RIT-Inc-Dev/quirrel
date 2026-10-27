@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import { withoutTrailingSlash } from "./config";
 
 test("withoutTrailingSlash", () => {

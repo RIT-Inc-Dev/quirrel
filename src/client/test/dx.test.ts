@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { QuirrelClient } from "..";
 
 describe("DX", () => {
@@ -43,19 +44,19 @@ describe("DX", () => {
 
   describe("when given a runAt in the past", () => {
     it("throws immediately", async () => {
-      await expect(() =>
+      await expect(
         quirrel.enqueue("", { runAt: new Date(0) }),
       ).rejects.toThrowError("runAt must not be in the past");
 
-      await expect(() =>
-        quirrel.enqueue("", { delay: -1 }),
-      ).rejects.toThrowError("delay must be positive");
+      await expect(quirrel.enqueue("", { delay: -1 })).rejects.toThrowError(
+        "delay must be positive",
+      );
     });
   });
 
   describe("when given both retry and repeat", () => {
     it("throws immediately", async () => {
-      await expect(() =>
+      await expect(
         quirrel.enqueue("", {
           retry: ["1min"],
           repeat: { every: "200ms", times: 5 },
@@ -66,7 +67,7 @@ describe("DX", () => {
 
   describe("when overriding without id", () => {
     it("throws immediately", async () => {
-      await expect(() =>
+      await expect(
         quirrel.enqueue("", {
           override: true,
         }),

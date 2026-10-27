@@ -1,3 +1,4 @@
+import { describe, expect } from "bun:test";
 import { EventEmitter } from "node:events";
 import type * as http from "node:http";
 import type { AddressInfo } from "ws";

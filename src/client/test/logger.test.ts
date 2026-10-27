@@ -1,27 +1,38 @@
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from "bun:test";
 import { run } from "../../api/test/runQuirrel";
 import { QuirrelClient } from "..";
 import { getAddress } from "./util";
 
-const errorLogMock = jest.fn();
-const logMock = jest.fn();
-const receiverMock = jest.fn();
-
-global.console = {
-  ...global.console,
-  error: errorLogMock,
-  log: logMock,
-};
+const errorLogMock = mock();
+const logMock = mock();
+const receiverMock = mock();
 
 describe("client logger", () => {
   let quirrelBaseUrl: string;
   let server: Awaited<ReturnType<typeof run>>;
+  const originalConsole = global.console;
 
   beforeAll(async () => {
+    // all test files share one process under Bun, so scope the replacement
+    global.console = {
+      ...originalConsole,
+      error: errorLogMock,
+      log: logMock,
+    };
     server = await run("Mock");
     quirrelBaseUrl = getAddress(server.server);
   });
 
   afterAll(async () => {
+    global.console = originalConsole;
     server.teardown();
   });
 
@@ -62,8 +73,8 @@ describe("client logger", () => {
   });
 
   it("allows passing a custom logger function", async () => {
-    const receivedJob = jest.fn();
-    const processingError = jest.fn();
+    const receivedJob = mock();
+    const processingError = mock();
 
     const quirrel = new QuirrelClient<{ result: "success" | "fail" }>({
       route: "",

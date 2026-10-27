@@ -1,3 +1,4 @@
+import { describe, expect, it } from "bun:test";
 import { idempotent } from "./queue-repo";
 
 describe("idempotent", () => {

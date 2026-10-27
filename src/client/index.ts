@@ -10,9 +10,9 @@ import { isValidCronExpression } from "../shared/is-valid-cron";
 import { isValidTimezone } from "../shared/repeat";
 import * as config from "./config";
 import * as EnhancedJSON from "./enhanced-json";
-import { Job, type JobDTO } from "./job";
+import type { Job, JobDTO } from "./job";
 
-export { Job };
+export type { Job };
 
 export type JobMeta = Pick<JobDTO, "id" | "count" | "exclusive" | "retry"> & {
   /**

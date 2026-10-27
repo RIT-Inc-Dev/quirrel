@@ -1,3 +1,4 @@
+import { describe, test } from "bun:test";
 import request from "supertest";
 import { run } from "./runQuirrel";
 

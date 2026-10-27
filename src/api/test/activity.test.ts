@@ -1,3 +1,4 @@
+import { expect, it, setDefaultTimeout } from "bun:test";
 import fastify from "fastify";
 import request from "supertest";
 import websocket from "websocket";
@@ -12,7 +13,7 @@ import {
 } from "../../client/test/util";
 import { run } from "./runQuirrel";
 
-jest.setTimeout(20 * 1000);
+setDefaultTimeout(20 * 1000);
 
 describeAcrossBackends("Activity", (backend) => {
   it("works", async () => {

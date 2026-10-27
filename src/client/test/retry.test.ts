@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import http from "node:http";
 import { run } from "../../api/test/runQuirrel";
 import { QuirrelClient } from "..";

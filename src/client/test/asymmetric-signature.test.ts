@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import { generateKeyPairSync } from "node:crypto";
 import * as http from "node:http";
 import { run } from "../../api/test/runQuirrel";

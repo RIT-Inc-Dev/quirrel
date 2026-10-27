@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import * as http from "node:http";
 import delay from "delay";
 import { run } from "../../api/test/runQuirrel";

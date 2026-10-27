@@ -1,3 +1,4 @@
+import { expect, test } from "bun:test";
 import { run } from "../../api/test/runQuirrel";
 import { type Job, QuirrelClient } from "..";
 import { getAddress } from "./util";

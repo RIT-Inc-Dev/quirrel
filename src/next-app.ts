@@ -1,16 +1,16 @@
 import {
-  DefaultJobOptions,
-  EnqueueJobOptions,
-  Job,
+  type DefaultJobOptions,
+  type EnqueueJobOptions,
+  type Job,
   QuirrelClient,
-  QuirrelJobHandler,
+  type QuirrelJobHandler,
   type QuirrelOptions,
 } from "./client";
 import { registerDevelopmentDefaults } from "./client/config";
 
 type NextApiHandler = (req: Request) => Response | Promise<Response>;
 
-export { DefaultJobOptions, EnqueueJobOptions, Job, QuirrelJobHandler };
+export type { DefaultJobOptions, EnqueueJobOptions, Job, QuirrelJobHandler };
 
 registerDevelopmentDefaults({
   applicationPort: 3000,

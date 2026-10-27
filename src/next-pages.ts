@@ -1,11 +1,11 @@
 import type { IncomingHttpHeaders } from "node:http";
 import {
-  DefaultJobOptions,
-  EnqueueJobOptions,
-  EnqueueJobOpts,
-  Job,
+  type DefaultJobOptions,
+  type EnqueueJobOptions,
+  type EnqueueJobOpts,
+  type Job,
   QuirrelClient,
-  QuirrelJobHandler,
+  type QuirrelJobHandler,
   type QuirrelOptions,
 } from "./client";
 import { registerDevelopmentDefaults } from "./client/config";
@@ -26,7 +26,7 @@ export type NextApiHandler = (
   res: NextApiResponse,
 ) => void | Promise<void>;
 
-export {
+export type {
   DefaultJobOptions,
   EnqueueJobOptions,
   EnqueueJobOpts,

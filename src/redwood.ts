@@ -1,15 +1,15 @@
 import {
-  DefaultJobOptions,
-  EnqueueJobOptions,
-  EnqueueJobOpts,
-  Job,
+  type DefaultJobOptions,
+  type EnqueueJobOptions,
+  type EnqueueJobOpts,
+  type Job,
   QuirrelClient,
-  QuirrelJobHandler,
+  type QuirrelJobHandler,
   type QuirrelOptions,
 } from "./client";
 import { registerDevelopmentDefaults } from "./client/config";
 
-export {
+export type {
   DefaultJobOptions,
   EnqueueJobOptions,
   EnqueueJobOpts,
