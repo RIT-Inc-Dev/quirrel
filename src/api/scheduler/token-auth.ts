@@ -40,7 +40,8 @@ const tokenAuthServicePlugin: FastifyPluginCallback<TokenAuthPluginOpts> = (
   opts,
   done,
 ) => {
-  fastify.decorateRequest("tokenId", null);
+  // always set by tokenAuthPreValidation before handlers read it
+  fastify.decorateRequest("tokenId", "");
   fastify.decorate(
     "tokenAuthPreValidation",
     async (request: FastifyRequest, reply: FastifyReply) => {

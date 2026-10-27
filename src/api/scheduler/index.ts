@@ -4,7 +4,6 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import fastify from "fastify";
-import blipp from "fastify-blipp";
 import type { Redis } from "ioredis";
 import pack from "../../../package.json";
 import type { Logger } from "../shared/logger";
@@ -61,7 +60,7 @@ export async function createServer({
   postHogApiKey,
 }: QuirrelServerConfig) {
   const app = fastify({
-    logger: logger instanceof StructuredLogger ? logger.log : undefined,
+    loggerInstance: logger instanceof StructuredLogger ? logger.log : undefined,
     maxParamLength: 500,
   });
 
@@ -81,10 +80,11 @@ export async function createServer({
     keyGenerator: (req) => req.headers.authorization ?? req.ip,
   });
 
-  app.register(blipp);
-
   app.register(cors, {
     origin: "*",
+    // @fastify/cors >= 10 only allows simple methods by default; the
+    // development UI (another origin) also deletes and updates jobs
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   });
 
   const enableAdminBasedAuth = !!passphrases?.length;
@@ -199,11 +199,6 @@ export async function createServer({
   app.register(indexRoute);
 
   app.ready(async () => {
-    const debug = false;
-    if (debug) {
-      app.blipp();
-    }
-
     app.swagger();
 
     app.telemetrist?.dispatch("ready");

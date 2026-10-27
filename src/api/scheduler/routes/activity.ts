@@ -31,21 +31,21 @@ const activityPlugin: FastifyPluginCallback = (fastify, _opts, done) => {
             : undefined,
         },
       },
-      async (connection, req) => {
+      async (socket, req) => {
         workAroundWebsocketAuth(req);
 
         const tokenId = await fastify.tokenAuth.authenticate(req);
 
         if (!tokenId) {
-          connection.socket.close();
+          socket.close();
           return;
         }
 
         const close = fastify.jobs.onEvent(tokenId, (event, job) => {
-          connection.socket.send(JSON.stringify([event, job]));
+          socket.send(JSON.stringify([event, job]));
         });
 
-        connection.on("close", close);
+        socket.on("close", close);
       },
     );
   });

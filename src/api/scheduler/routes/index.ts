@@ -10,10 +10,10 @@ const index: FastifyPluginCallback = (fastify, opts, done) => {
     wildcard: false,
     redirect: true,
     schemaHide: true,
-    setHeaders(res) {
+    setHeaders(reply) {
       const auth = fastify.adminBasedAuthEnabled;
       const config = [auth];
-      res.setHeader("Set-Cookie", `Quirrel-UI-Config=${config.join("-")}`);
+      reply.header("Set-Cookie", `Quirrel-UI-Config=${config.join("-")}`);
     },
   });
 
