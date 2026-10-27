@@ -17,6 +17,7 @@ bun run type-check  # tsc for the server and development-ui
 bun run build
 docker run -d --rm -p 6379:6379 redis:7
 REDIS_URL=redis://localhost:6379 bun run test  # bun:test
+bun run test:node   # node:test against dist, for Node-only paths such as SSRF prevention
 ```
 
 - `development-ui/` is a separate package (`bun install` there too); its Playwright tests run with `bun run test:ci`.

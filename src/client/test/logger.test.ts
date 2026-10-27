@@ -15,22 +15,24 @@ const errorLogMock = mock();
 const logMock = mock();
 const receiverMock = mock();
 
-global.console = {
-  ...global.console,
-  error: errorLogMock,
-  log: logMock,
-};
-
 describe("client logger", () => {
   let quirrelBaseUrl: string;
   let server: Awaited<ReturnType<typeof run>>;
+  const originalConsole = global.console;
 
   beforeAll(async () => {
+    // all test files share one process under Bun, so scope the replacement
+    global.console = {
+      ...originalConsole,
+      error: errorLogMock,
+      log: logMock,
+    };
     server = await run("Mock");
     quirrelBaseUrl = getAddress(server.server);
   });
 
   afterAll(async () => {
+    global.console = originalConsole;
     server.teardown();
   });
 

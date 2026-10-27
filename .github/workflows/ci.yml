@@ -39,6 +39,8 @@ jobs:
     - run: bun run build
     - run: bun run type-check
     - run: bun run test --coverage --coverage-reporter=lcov
+    # Node-only paths (e.g. SSRF prevention) against the built server
+    - run: bun run test:node
     - name: Coveralls Quirrel
       uses: coverallsapp/github-action@master
       with:

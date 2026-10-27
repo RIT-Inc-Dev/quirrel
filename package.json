@@ -32,6 +32,7 @@
   "scripts": {
     "start": "node dist/cjs/src/cli/index.js",
     "test": "DISABLE_TELEMETRY=true bun test",
+    "test:node": "DISABLE_TELEMETRY=true node --test \"test/node/*.test.mjs\"",
     "lint": "biome ci",
     "lint:fix": "biome check --write",
     "type-check": "run-s build:schemas type-check:tsc",

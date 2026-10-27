@@ -30,8 +30,8 @@ describe("SSRF Prevention", () => {
 
   function testWithSSR(mode: "enabled" | "disabled") {
     // The filter hooks into Node's http.Agent#createConnection, which Bun's
-    // HTTP client doesn't call. Production runs on Node.js; the IP check
-    // itself is covered by ssrf-filter.test.ts.
+    // HTTP client doesn't call. test/node/ssrf-prevention.test.mjs covers this
+    // case on Node.js; the IP check itself is in ssrf-filter.test.ts.
     const unsupported = mode === "enabled" && "Bun" in globalThis;
     test.skipIf(unsupported)(`ssrf prevention ${mode}`, async () => {
       const res = await run("Mock", {
