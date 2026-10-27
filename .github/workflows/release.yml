@@ -36,7 +36,16 @@ jobs:
           scope: "@rit-inc-dev"
       # Already built above; skip prepack. npm requires an explicit dist-tag
       # for prerelease-style versions such as 1.14.1-rit-4.
-      - run: npm publish --ignore-scripts --tag latest
+      # Skipped when the version exists, so a failed run can be re-run.
+      - name: Publish to GitHub Packages
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already published"
+          else
+            npm publish --ignore-scripts --tag latest
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -63,6 +72,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Create GitHub Release
-        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
