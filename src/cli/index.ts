@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import pack from "../../package.json";
 
-import { Command, program } from "commander";
-import registerUI from "./commands/ui";
+import { type Command, program } from "commander";
+import pack from "../../package.json";
 import registerCI from "./commands/ci";
 import registerDetectCron from "./commands/detect-cron";
-import registerUpdateCron from "./commands/update-cron";
 import registerRun from "./commands/index";
+import registerUI from "./commands/ui";
+import registerUpdateCron from "./commands/update-cron";
 
 program.version(pack.version);
 

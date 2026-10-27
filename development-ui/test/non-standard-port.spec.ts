@@ -1,10 +1,10 @@
+import { test } from "@playwright/test";
 import delay from "delay";
-import { runQuirrel } from "./runQuirrel";
 import {
   expectToShowAttachingToQuirrel,
   expectToShowJobTable,
 } from "./assertions";
-import { test } from "@playwright/test";
+import { runQuirrel } from "./runQuirrel";
 
 let cleanup: (() => Promise<void>)[] = [];
 

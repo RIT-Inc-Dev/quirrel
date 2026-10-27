@@ -1,18 +1,19 @@
-import { EnqueueJob } from "./types/queues/POST/body";
-import { QueuesUpdateCronBody } from "./types/queues/update-cron";
+import { randomUUID } from "node:crypto";
+import type Owl from "@quirrel/owl";
+import type { Closable, Job } from "@quirrel/owl";
+import type { Redis } from "ioredis";
+import * as config from "../../client/config";
+import { cron, embedTimezone, parseTimezonedCron } from "../../shared/repeat";
 import {
-  encodeQueueDescriptor,
   decodeQueueDescriptor,
+  encodeQueueDescriptor,
   isPlainEndpoint,
   toPlainEndpoint,
 } from "../shared/queue-descriptor";
-import { randomUUID } from "crypto";
-import { cron, embedTimezone, parseTimezonedCron } from "../../shared/repeat";
-import Owl, { Closable, Job } from "@quirrel/owl";
-import { QueueRepo } from "./queue-repo";
-import { Redis } from "ioredis";
 import { fastifyDecoratorPlugin } from "./helper/fastify-decorator-plugin";
-import * as config from "../../client/config";
+import { QueueRepo } from "./queue-repo";
+import type { EnqueueJob } from "./types/queues/POST/body";
+import type { QueuesUpdateCronBody } from "./types/queues/update-cron";
 
 function withoutWrappingSlashes(url: string): string {
   return withoutLeadingSlash(withoutTrailingSlash(url));
@@ -34,12 +35,12 @@ function withoutLeadingSlash(url: string): string {
   return url;
 }
 
-interface PaginationOpts {
+type PaginationOpts = {
   cursor: number;
   count?: number;
-}
+};
 
-interface JobDTO {
+type JobDTO = {
   id: string;
   endpoint: string;
   body: string;
@@ -54,13 +55,16 @@ interface JobDTO {
     cron?: string;
     cronTimezone?: string;
   };
-}
+};
 
 export class JobsRepo implements Closable {
   protected producer;
   public readonly queueRepo: QueueRepo;
 
-  constructor(protected readonly owl: Owl<"every" | "cron">, redis: Redis) {
+  constructor(
+    protected readonly owl: Owl<"every" | "cron">,
+    redis: Redis,
+  ) {
     this.producer = this.owl.createProducer();
     this.queueRepo = new QueueRepo(redis, this);
   }
@@ -71,7 +75,7 @@ export class JobsRepo implements Closable {
     let cron: Pick<NonNullable<JobDTO["repeat"]>, "cron" | "cronTimezone"> = {};
     if (job.schedule?.type === "cron") {
       const [cronExpression, cronTimezone] = parseTimezonedCron(
-        job.schedule.meta
+        job.schedule.meta,
       );
       cron = { cron: cronExpression, cronTimezone };
     }
@@ -103,12 +107,12 @@ export class JobsRepo implements Closable {
   public async find(
     byTokenId: string,
     endpoint: string,
-    { count, cursor }: PaginationOpts
+    { count, cursor }: PaginationOpts,
   ) {
     const { newCursor, jobs } = await this.producer.scanQueue(
       encodeQueueDescriptor(byTokenId, endpoint),
       cursor,
-      count
+      count,
     );
 
     return {
@@ -121,7 +125,7 @@ export class JobsRepo implements Closable {
     const { newCursor, jobs } = await this.producer.scanQueuePattern(
       encodeQueueDescriptor("*", "*"),
       cursor,
-      count
+      count,
     );
 
     return {
@@ -139,12 +143,12 @@ export class JobsRepo implements Closable {
 
   public async findByTokenId(
     byTokenId: string,
-    { count, cursor }: PaginationOpts
+    { count, cursor }: PaginationOpts,
   ) {
     const { newCursor, jobs } = await this.producer.scanQueuePattern(
       encodeQueueDescriptor(byTokenId, "*"),
       cursor,
-      count
+      count,
     );
 
     return {
@@ -162,28 +166,28 @@ export class JobsRepo implements Closable {
       const { newCursor, jobs } = await this.producer.scanQueuePattern(
         encodeQueueDescriptor(byTokenId, "*"),
         cursor,
-        1000
+        1000,
       );
 
       cursor = newCursor;
 
       for (const job of jobs) {
         const endpoint = toPlainEndpoint(
-          decodeQueueDescriptor(job.queue).endpoint
+          decodeQueueDescriptor(job.queue).endpoint,
         );
         counts[endpoint] = (counts[endpoint] || 0) + 1;
       }
     } while (cursor !== 0);
 
     return Object.fromEntries(
-      Object.entries(counts).map(([endpoint, count]) => [endpoint, { count }])
+      Object.entries(counts).map(([endpoint, count]) => [endpoint, { count }]),
     );
   }
 
   public async findById(tokenId: string, endpoint: string, id: string) {
     const job = await this.producer.findById(
       encodeQueueDescriptor(tokenId, endpoint),
-      id
+      id,
     );
     return job ? JobsRepo.toJobDTO(job) : undefined;
   }
@@ -191,7 +195,7 @@ export class JobsRepo implements Closable {
   public async invoke(tokenId: string, endpoint: string, id: string) {
     return await this.producer.invoke(
       encodeQueueDescriptor(tokenId, endpoint),
-      id
+      id,
     );
   }
 
@@ -200,8 +204,8 @@ export class JobsRepo implements Closable {
   // 生のジョブが持つ job.queue (実際の保存キーそのもの)を直接使って削除する。
   private async emptyByGetter(
     getter: (
-      cursor: number
-    ) => Promise<{ newCursor: number; jobs: Job<"every" | "cron">[] }>
+      cursor: number,
+    ) => Promise<{ newCursor: number; jobs: Job<"every" | "cron">[] }>,
   ) {
     let cursor = 0;
     const allPromises: Promise<any>[] = [];
@@ -222,8 +226,8 @@ export class JobsRepo implements Closable {
       this.producer.scanQueue(
         encodeQueueDescriptor(tokenId, endpoint),
         cursor,
-        1000
-      )
+        1000,
+      ),
     );
   }
 
@@ -232,15 +236,15 @@ export class JobsRepo implements Closable {
       this.producer.scanQueuePattern(
         encodeQueueDescriptor(tokenId, "*"),
         cursor,
-        1000
-      )
+        1000,
+      ),
     );
   }
 
   public async delete(tokenId: string, endpoint: string, id: string) {
     return await this.producer.delete(
       encodeQueueDescriptor(tokenId, endpoint),
-      id
+      id,
     );
   }
 
@@ -256,13 +260,13 @@ export class JobsRepo implements Closable {
       override,
       exclusive,
       retry,
-    }: EnqueueJob
+    }: EnqueueJob,
   ) {
     if (typeof id === "undefined") {
       id = randomUUID();
     }
 
-    let runAt: Date | undefined = undefined;
+    let runAt: Date | undefined;
 
     if (runAtOption) {
       runAt = new Date(runAtOption);
@@ -274,8 +278,8 @@ export class JobsRepo implements Closable {
       throw new Error("repeat.times must be positive");
     }
 
-    let schedule_type: "every" | "cron" | undefined = undefined;
-    let schedule_meta: string | undefined = undefined;
+    let schedule_type: "every" | "cron" | undefined;
+    let schedule_meta: string | undefined;
 
     if (repeat?.cron) {
       schedule_type = "cron";
@@ -291,7 +295,7 @@ export class JobsRepo implements Closable {
 
     if (repeat?.every) {
       schedule_type = "every";
-      schedule_meta = "" + repeat.every;
+      schedule_meta = `${repeat.every}`;
     }
 
     const createdJob = await this.producer.enqueue({
@@ -317,7 +321,7 @@ export class JobsRepo implements Closable {
 
   public async updateCron(
     tokenId: string,
-    { baseUrl, crons, dryRun }: QueuesUpdateCronBody
+    { baseUrl, crons, dryRun }: QueuesUpdateCronBody,
   ) {
     const deleted: string[] = [];
 
@@ -325,7 +329,7 @@ export class JobsRepo implements Closable {
     // cron も同じ形で登録する（揃っていないと getById / invoke で見つからない）。
     const queues = await this.queueRepo.get(tokenId);
     const queuesOnSameDeployment = queues.filter((q) =>
-      toPlainEndpoint(q).startsWith(baseUrl)
+      toPlainEndpoint(q).startsWith(baseUrl),
     );
 
     if (!dryRun) {
@@ -335,17 +339,17 @@ export class JobsRepo implements Closable {
             tokenId,
             encodeURIComponent(
               `${config.withoutTrailingSlash(
-                baseUrl
-              )}/${config.withoutLeadingSlash(route)}`
+                baseUrl,
+              )}/${config.withoutLeadingSlash(route)}`,
             ),
             {
               id: "@cron",
               body: "null",
               override: true,
               repeat: { cron: schedule, cronTimezone: timezone },
-            }
+            },
           );
-        })
+        }),
       );
     }
 
@@ -356,7 +360,7 @@ export class JobsRepo implements Closable {
       queuesOnSameDeployment.map(async (queue) => {
         const plainEndpoint = toPlainEndpoint(queue);
         const route = withoutWrappingSlashes(
-          plainEndpoint.slice(baseUrl.length)
+          plainEndpoint.slice(baseUrl.length),
         );
         const shouldPersist = routesThatShouldPersist.includes(route);
 
@@ -379,7 +383,7 @@ export class JobsRepo implements Closable {
             deleted.push(plainEndpoint);
           }
         }
-      })
+      }),
     );
 
     return { deleted };
@@ -389,21 +393,21 @@ export class JobsRepo implements Closable {
     requesterTokenId: string,
     cb: (
       event: string,
-      job: { endpoint: string; id: string; runAt?: string } | JobDTO
-    ) => void
+      job: { endpoint: string; id: string; runAt?: string } | JobDTO,
+    ) => void,
   ) {
     const activity = this.owl.createActivity(
       async (event) => {
         if (event.type === "scheduled") {
           cb(
             "scheduled",
-            JobsRepo.toJobDTO(event.job as Job<"every" | "cron">)
+            JobsRepo.toJobDTO(event.job as Job<"every" | "cron">),
           );
           return;
         }
 
         const endpoint = toPlainEndpoint(
-          decodeQueueDescriptor(event.queue).endpoint
+          decodeQueueDescriptor(event.queue).endpoint,
         );
 
         switch (event.type) {
@@ -430,7 +434,7 @@ export class JobsRepo implements Closable {
       },
       {
         queue: encodeQueueDescriptor(requesterTokenId, "*"),
-      }
+      },
     );
 
     return () => activity.close();
@@ -438,6 +442,7 @@ export class JobsRepo implements Closable {
 }
 
 declare module "fastify" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface
   interface FastifyInstance {
     jobs: JobsRepo;
   }
@@ -445,5 +450,5 @@ declare module "fastify" {
 
 export const jobsRepoPlugin = fastifyDecoratorPlugin(
   "jobs",
-  (fastify) => new JobsRepo(fastify.owl, fastify.redis)
+  (fastify) => new JobsRepo(fastify.owl, fastify.redis),
 );

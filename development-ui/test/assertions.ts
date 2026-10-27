@@ -1,16 +1,16 @@
+import type { Page } from "@playwright/test";
 import { expect } from "chai";
-import { Page } from "@playwright/test";
 
 export async function expectTableCellToEqual(
   row: number,
   column: number,
   value: string,
-  _page: Page
+  _page: Page,
 ) {
   const rowEl = await _page.$(`//tr[${row}]`);
   expect(rowEl).to.exist;
   expect(
-    await (await _page.$(`//tr[${row}]/td[${column}]`))?.innerText()
+    await (await _page.$(`//tr[${row}]/td[${column}]`))?.innerText(),
   ).to.equal(value);
 }
 
@@ -29,6 +29,6 @@ export async function expectToShowJobTable(page: Page) {
   const tableEl = await page.$("[data-test-class=table]");
   expect(tableEl).to.exist;
   expect(await tableEl?.textContent()).to.equal(
-    ["Endpoint", "ID", "Run At", "Payload"].join("")
+    ["Endpoint", "ID", "Run At", "Payload"].join(""),
   );
 }

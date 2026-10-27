@@ -1,7 +1,7 @@
-import { run } from "./runQuirrel";
-import fastify from "fastify";
 import delay from "delay";
+import fastify from "fastify";
 import request from "supertest";
+import { run } from "./runQuirrel";
 
 function testAgainst(backend: "Redis" | "Mock") {
   async function setup({ fail = false }: { fail?: boolean } = {}) {
@@ -21,7 +21,7 @@ function testAgainst(backend: "Redis" | "Mock") {
     const endpoint = encodeURIComponent(
       await server.listen({
         port: 0,
-      })
+      }),
     );
 
     const incidentReceiverAuthorizations: any[] = [];
@@ -39,10 +39,9 @@ function testAgainst(backend: "Redis" | "Mock") {
       }
     });
 
-    const incidentReceiverEndpoint =
-      (await incidentReceiver.listen({
-        port: 0,
-      })) + "/incident";
+    const incidentReceiverEndpoint = `${await incidentReceiver.listen({
+      port: 0,
+    })}/incident`;
 
     const res = await run(backend, {
       incidentReceiver: {
@@ -65,7 +64,7 @@ function testAgainst(backend: "Redis" | "Mock") {
     };
   }
 
-  describe(backend + " > incidents", () => {
+  describe(`${backend} > incidents`, () => {
     test("are sent to the incident receiver", async () => {
       const {
         teardown,
@@ -80,7 +79,7 @@ function testAgainst(backend: "Redis" | "Mock") {
       const runAt = new Date().toISOString();
 
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: JSON.stringify({ foo: "bar" }),
           id: "a",
@@ -118,17 +117,13 @@ function testAgainst(backend: "Redis" | "Mock") {
     describe("on a repeated job", () => {
       describe("when seeing a 404", () => {
         it("ends that job", async () => {
-          const {
-            teardown,
-            quirrel,
-            endpoint,
-            incidentReceiverBodies,
-          } = await setup();
+          const { teardown, quirrel, endpoint, incidentReceiverBodies } =
+            await setup();
 
           const runAt = new Date().toISOString();
 
           await request(quirrel)
-            .post("/queues/" + endpoint)
+            .post(`/queues/${endpoint}`)
             .send({
               body: JSON.stringify({ status: 404 }),
               id: "a",
@@ -152,17 +147,13 @@ function testAgainst(backend: "Redis" | "Mock") {
 
       describe("when seeing non-404", () => {
         it("schedules next execution", async () => {
-          const {
-            teardown,
-            quirrel,
-            endpoint,
-            incidentReceiverBodies,
-          } = await setup();
+          const { teardown, quirrel, endpoint, incidentReceiverBodies } =
+            await setup();
 
           const runAt = new Date().toISOString();
 
           await request(quirrel)
-            .post("/queues/" + endpoint)
+            .post(`/queues/${endpoint}`)
             .send({
               body: JSON.stringify({ status: 502 }),
               id: "a",
@@ -196,7 +187,7 @@ function testAgainst(backend: "Redis" | "Mock") {
         const runAt = new Date().toISOString();
 
         await request(quirrel)
-          .post("/queues/" + endpoint)
+          .post(`/queues/${endpoint}`)
           .send({
             body: JSON.stringify({ status: 502 }),
             id: "a",
@@ -229,7 +220,7 @@ function testAgainst(backend: "Redis" | "Mock") {
         const runAt = new Date().toISOString();
 
         await request(quirrel)
-          .post("/queues/" + endpoint)
+          .post(`/queues/${endpoint}`)
           .send({
             body: JSON.stringify({ foo: "bar" }),
             id: "a",

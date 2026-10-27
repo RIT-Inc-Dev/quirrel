@@ -1,16 +1,16 @@
-import { FC, useContext, useState } from "react";
+import horn from "url:../img/horn_transparent.png";
 import clsx from "clsx";
-import React from "react";
+import type React from "react";
+import { type FC, useContext, useState } from "react";
+import { ConfigContext, type Route, RouterContext } from "../index";
 import { EndpointModal } from "./EndpointModal";
 import { SearchBar } from "./SearchBar";
-import { RouterContext, Route, ConfigContext } from "../index";
-import horn from "url:../img/horn_transparent.png";
 import { StatsModal } from "./StatsModal";
 
-interface RouterAnchorProps extends React.HTMLProps<HTMLAnchorElement> {
+type RouterAnchorProps = React.HTMLProps<HTMLAnchorElement> & {
   to: Route;
   getClassName(selected: boolean): string;
-}
+};
 
 const RouterAnchor: FC<RouterAnchorProps> = ({ to, getClassName, ...rest }) => {
   const router = useContext(RouterContext);
@@ -18,7 +18,7 @@ const RouterAnchor: FC<RouterAnchorProps> = ({ to, getClassName, ...rest }) => {
   return (
     <a
       {...rest}
-      href={"/" + to}
+      href={`/${to}`}
       onClick={(evt) => {
         evt.preventDefault();
         router.navigate(to);
@@ -40,7 +40,7 @@ const PillButton: FC<Omit<RouterAnchorProps, "getClassName">> = (props) => (
           ? "text-white bg-orange-500"
           : "text-gray-800 hover:text-white hover:bg-orange-300",
         "text-sm",
-        buttonBaseClassName
+        buttonBaseClassName,
       )
     }
   />
@@ -55,7 +55,7 @@ const MenuButton: FC<Omit<RouterAnchorProps, "getClassName">> = (props) => (
           ? "text-white bg-orange-500"
           : "text-gray-800 hover:text-white hover:bg-orange-300",
         "block text-base",
-        buttonBaseClassName
+        buttonBaseClassName,
       )
     }
   />
@@ -82,6 +82,7 @@ export function Nav() {
                 href={config.linkToAPIDocs}
                 target="_blank"
                 className="text-gray-600 hover:text-gray-700"
+                rel="noopener"
               >
                 OpenAPI Docs
                 <svg
@@ -117,6 +118,7 @@ export function Nav() {
               href="https://github.com/quirrel-dev/quirrel/issues/new/choose"
               target="_blank"
               className="text-center text-gray-600 hover:text-gray-400 px-3 block text-base font-medium cursor-pointer hidden md:block"
+              rel="noopener"
             >
               Feedback
             </a>
@@ -167,6 +169,7 @@ export function Nav() {
             href="https://github.com/quirrel-dev/quirrel/issues/new/choose"
             target="_blank"
             className="text-gray-600 hover:text-gray-400 px-3 mt-2 block text-base font-medium cursor-pointer"
+            rel="noopener"
           >
             Feedback
           </a>
@@ -176,6 +179,7 @@ export function Nav() {
               href={config.linkToAPIDocs}
               target="_blank"
               className="text-gray-600 hover:text-gray-400 px-3 mt-2 block text-base font-medium cursor-pointer"
+              rel="noopener"
             >
               OpenAPI Docs
               <svg

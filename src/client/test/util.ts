@@ -1,12 +1,12 @@
-import { EventEmitter } from "events";
-import type * as http from "http";
+import { EventEmitter } from "node:events";
+import type * as http from "node:http";
 import type { AddressInfo } from "ws";
 
 export type Backend = "Mock" | "Redis";
 
 export function describeAcrossBackends(
   topic: string,
-  runTests: (backend: Backend) => void
+  runTests: (backend: Backend) => void,
 ) {
   describe(topic, () => {
     describe("Redis", () => {
@@ -46,10 +46,10 @@ function removeFirstStackLine(string: string): string {
 export function waitUntil(
   predicate: () => boolean,
   butMax: number,
-  interval = 20
+  interval = 20,
 ) {
   const potentialError = new Error(
-    `Predicate was not fulfilled on time (${predicate.toString()})`
+    `Predicate was not fulfilled on time (${predicate.toString()})`,
   ) as any;
   potentialError.showDiff = false;
   potentialError.stack = removeFirstStackLine(potentialError.stack!);
@@ -72,7 +72,7 @@ export function waitUntil(
 
 export function expectToBeInRange(
   value: number,
-  [from, to]: [from: number, to: number]
+  [from, to]: [from: number, to: number],
 ) {
   expect(value).toBeGreaterThanOrEqual(from);
   expect(value).toBeLessThanOrEqual(to);

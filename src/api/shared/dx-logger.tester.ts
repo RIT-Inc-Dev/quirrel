@@ -6,8 +6,7 @@ dxLogger.started("localhost:9181", true);
 dxLogger.started("localhost:9181", false);
 
 dxLogger.jobCreated({
-  body:
-    '{"a":"very","long":{"json":"object"},"with":{"even":{"more":"attributes"}}}',
+  body: '{"a":"very","long":{"json":"object"},"with":{"even":{"more":"attributes"}}}',
   endpoint: "https://localhost:9181/api/queues",
   id: "my-random-job",
   tokenId: "anonymous",
@@ -18,8 +17,7 @@ dxLogger.jobCreated({
 });
 
 const done = dxLogger.startingExecution({
-  body:
-    '{"a":"very","long":{"json":"object"},"with":{"even":{"more":"attributes"}}}',
+  body: '{"a":"very","long":{"json":"object"},"with":{"even":{"more":"attributes"}}}',
   endpoint: "https://localhost:9181/api/queues",
   id: "my-random-job",
   tokenId: "anonymous",

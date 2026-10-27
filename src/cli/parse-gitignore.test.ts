@@ -1,6 +1,6 @@
-import fs from "fs";
-import os from "os";
-import path from "path";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import spawn from "cross-spawn";
 import { getAllGitIgnores } from "./parse-gitignore";
 
@@ -28,7 +28,7 @@ describe("getAllGitIgnores", () => {
 
     mockedSpawnSync.mockReturnValue({
       status: 0,
-      stdout: Buffer.from(globalIgnore + "\n"),
+      stdout: Buffer.from(`${globalIgnore}\n`),
     } as any);
 
     const projectDir = path.join(tmpDir, "project");

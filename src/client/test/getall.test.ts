@@ -1,5 +1,5 @@
-import { Job, QuirrelClient } from "..";
 import { run } from "../../api/test/runQuirrel";
+import { type Job, QuirrelClient } from "..";
 import { getAddress } from "./util";
 
 test("getAll", async () => {
@@ -41,7 +41,7 @@ test("getAll", async () => {
   const { value: fetchedJobs, done } = await iterator.next();
 
   expect(
-    (fetchedJobs as Job<unknown>[]).map((v) => JSON.stringify(v)).sort()
+    (fetchedJobs as Job<unknown>[]).map((v) => JSON.stringify(v)).sort(),
   ).toEqual(jobs.map((v) => JSON.stringify(v)).sort());
   expect(done).toBe(false);
 

@@ -1,20 +1,19 @@
-import { FastifyPluginCallback } from "fastify";
-
-import EndpointParamsSchema from "../schemas/queues/endpoint-params.json";
-import SCANQueryStringSchema from "../schemas/queues/scan-querystring.json";
-import EndpointJobIDParamsSchema from "../schemas/queues/endpoint-jobid-params.json";
-import POSTQueuesEndpointBodySchema from "../schemas/queues/POST/body.json";
-import PUTUpdateCronBodySchema from "../schemas/queues/update-cron.json";
-import { EnqueueJob } from "../types/queues/POST/body";
-import { SCANQuerystringParams } from "../types/queues/scan-querystring";
-import { QueuesEndpointParams } from "../types/queues/endpoint-params";
-import { QueuesEndpointIdParams } from "../types/queues/endpoint-jobid-params";
-import { QueuesUpdateCronBody } from "../types/queues/update-cron";
+import * as LegacyUrl from "node:url";
+import type { FastifyPluginCallback } from "fastify";
+import type { JobDTO } from "../../../client/job";
 import { isValidCronExpression } from "../../../shared/is-valid-cron";
 import { isValidTimezone } from "../../../shared/repeat";
-import { JobDTO } from "../../../client/job";
 import { toPlainEndpoint } from "../../shared/queue-descriptor";
-import * as LegacyUrl from "url";
+import EndpointJobIDParamsSchema from "../schemas/queues/endpoint-jobid-params.json";
+import EndpointParamsSchema from "../schemas/queues/endpoint-params.json";
+import POSTQueuesEndpointBodySchema from "../schemas/queues/POST/body.json";
+import SCANQueryStringSchema from "../schemas/queues/scan-querystring.json";
+import PUTUpdateCronBodySchema from "../schemas/queues/update-cron.json";
+import type { QueuesEndpointIdParams } from "../types/queues/endpoint-jobid-params";
+import type { QueuesEndpointParams } from "../types/queues/endpoint-params";
+import type { EnqueueJob } from "../types/queues/POST/body";
+import type { SCANQuerystringParams } from "../types/queues/scan-querystring";
+import type { QueuesUpdateCronBody } from "../types/queues/update-cron";
 
 const jobs: FastifyPluginCallback = (fastify, opts, done) => {
   const jobsRepo = fastify.jobs;
@@ -168,7 +167,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
       fastify.logger?.jobCreated({ ...job, tokenId });
 
       reply.status(201).send(job);
-    }
+    },
   );
 
   fastify.delete<{ Body: EnqueueJob; Params: QueuesEndpointParams }>(
@@ -189,7 +188,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
       await jobsRepo.emptyQueue(tokenId, endpoint);
 
       reply.status(204).send();
-    }
+    },
   );
 
   fastify.post<{
@@ -218,7 +217,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
         return reply
           .status(400)
           .send(
-            "That's a whole lot of jobs! If this wasn't a mistake, please get in touch to lift the 5k limit."
+            "That's a whole lot of jobs! If this wasn't a mistake, please get in touch to lift the 5k limit.",
           );
       }
 
@@ -235,14 +234,16 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
       }
 
       const jobs = await Promise.all(
-        body.map((b) => jobsRepo.enqueue(tokenId, endpoint, b))
+        body.map((b) => jobsRepo.enqueue(tokenId, endpoint, b)),
       );
 
-      jobs.forEach((job) => fastify.logger?.jobCreated({ ...job, tokenId }));
-      jobs.forEach((job) => captureJobEnqueued(tokenId, job));
+      for (const job of jobs) {
+        fastify.logger?.jobCreated({ ...job, tokenId });
+        captureJobEnqueued(tokenId, job);
+      }
 
       reply.status(201).send(jobs);
-    }
+    },
   );
 
   fastify.get("/", {
@@ -283,7 +284,6 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
       reply.status(200).send(stats);
     },
   });
-  
 
   fastify.get<{
     Params: QueuesEndpointParams;
@@ -303,7 +303,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
         request.params.endpoint,
         {
           cursor: request.query.cursor ?? 0,
-        }
+        },
       );
 
       fastify.postHog?.capture({
@@ -437,14 +437,14 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
       const { tokenId, body } = request;
 
       const cronsAreValid = body.crons.every((cron) =>
-        isValidCronExpression(cron.schedule)
+        isValidCronExpression(cron.schedule),
       );
       if (!cronsAreValid) {
         return reply.status(400).send("invalid cron expression");
       }
 
       const timezonesAreValid = body.crons.every(
-        (cron) => !cron.timezone || isValidTimezone(cron.timezone)
+        (cron) => !cron.timezone || isValidTimezone(cron.timezone),
       );
       if (!timezonesAreValid) {
         return reply.status(400).send("invalid timezone");
@@ -463,7 +463,7 @@ const jobs: FastifyPluginCallback = (fastify, opts, done) => {
       });
 
       reply.status(200).send(response);
-    }
+    },
   );
 
   done();

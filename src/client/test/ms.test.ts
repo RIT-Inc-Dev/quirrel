@@ -1,6 +1,6 @@
-import { QuirrelClient } from "..";
+import * as http from "node:http";
 import { run } from "../../api/test/runQuirrel";
-import * as http from "http";
+import { QuirrelClient } from "..";
 import { expectToBeInRange, getAddress, makeSignal, stopTime } from "./util";
 
 test("ms", async () => {

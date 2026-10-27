@@ -1,8 +1,8 @@
-import { QuirrelClient } from "..";
+import { generateKeyPairSync } from "node:crypto";
+import * as http from "node:http";
 import { run } from "../../api/test/runQuirrel";
-import * as http from "http";
+import { QuirrelClient } from "..";
 import { getAddress, waitUntil } from "./util";
-import { generateKeyPairSync } from "crypto";
 
 function getKeyPair() {
   return generateKeyPairSync("rsa", {

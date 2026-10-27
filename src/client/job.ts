@@ -1,4 +1,4 @@
-export interface JobDTO {
+export type JobDTO = {
   /**
    * ID, used in conjunction with `endpoint` to identify the job.
    */
@@ -73,9 +73,9 @@ export interface JobDTO {
      */
     readonly count: number;
   };
-}
+};
 
-export interface Job<T> extends Omit<JobDTO, "runAt" | "body"> {
+export type Job<T> = Omit<JobDTO, "runAt" | "body"> & {
   /**
    * Date that the job has been scheduled for.
    * If it's a repeated job, this is the date for the next execution.
@@ -99,4 +99,4 @@ export interface Job<T> extends Omit<JobDTO, "runAt" | "body"> {
    * @returns false if the job has been deleted in the meantime.
    */
   invoke(): Promise<boolean>;
-}
+};

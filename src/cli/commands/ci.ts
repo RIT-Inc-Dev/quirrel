@@ -1,4 +1,4 @@
-import { Command } from "commander";
+import type { Command } from "commander";
 import { detectCron, detectedJobsToRouteScheduleManifest } from "./detect-cron";
 import { updateCron } from "./update-cron";
 
@@ -13,7 +13,7 @@ export default function registerCI(program: Command) {
 
 export async function quirrelCI(
   cwd = process.cwd(),
-  { dryRun, production }: { dryRun: boolean; production: boolean }
+  { dryRun, production }: { dryRun: boolean; production: boolean },
 ) {
   const detectedJobs = await detectCron(cwd);
 

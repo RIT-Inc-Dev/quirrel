@@ -39,9 +39,9 @@ export function prefixWithProtocol(string: string): string {
   }
 
   if (isProduction()) {
-    return "https://" + string;
+    return `https://${string}`;
   } else {
-    return "http://" + string;
+    return `http://${string}`;
   }
 }
 
@@ -61,7 +61,8 @@ export function getQuirrelBaseUrl(): string | undefined {
 
 export function getOldQuirrelBaseUrl(): string | undefined {
   const fromEnvironment =
-    process.env.QUIRREL_MIGRATE_OLD_API_URL ?? process.env.QUIRREL_MIGRATE_OLD_URL;
+    process.env.QUIRREL_MIGRATE_OLD_API_URL ??
+    process.env.QUIRREL_MIGRATE_OLD_URL;
   if (fromEnvironment) {
     return normalisedURL(fromEnvironment);
   }
@@ -96,7 +97,7 @@ function getNetlifyURL() {
   const netlifyDev = process.env.NETLIFY_DEV;
   const deployUrl = process.env.DEPLOY_URL;
   if (siteId) {
-    return siteId + ".netlify.app";
+    return `${siteId}.netlify.app`;
   } else {
     if (netlifyDev) {
       return deployUrl;

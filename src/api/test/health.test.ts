@@ -1,9 +1,9 @@
+import type http from "node:http";
 import request from "supertest";
 import { run } from "./runQuirrel";
-import type http from "http";
 
 function testAgainst(backend: "Redis" | "Mock") {
-  describe(backend + " > health", () => {
+  describe(`${backend} > health`, () => {
     let quirrel: http.Server;
     let teardown: () => Promise<void>;
 

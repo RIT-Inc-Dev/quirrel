@@ -1,8 +1,8 @@
 import { useLoading } from "../hooks/useLoading";
 
-interface InvokeButtonProps {
+type InvokeButtonProps = {
   invoke(): Promise<void>;
-}
+};
 
 export function InvokeButton(props: InvokeButtonProps) {
   const [isLoading, withLoading] = useLoading();

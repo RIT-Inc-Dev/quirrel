@@ -1,6 +1,7 @@
 require("./shared/tracer")("quirrel");
-import { runQuirrel } from ".";
+
 import { cliWithConfig } from "../shared/cliWithConfig";
+import { runQuirrel } from ".";
 import { createRedisFactory } from "./shared/create-redis";
 
 cliWithConfig(async (config) => {
@@ -29,7 +30,7 @@ cliWithConfig(async (config) => {
         path: REDIS_TLS_CA_FILE,
       },
     }),
-    passphrases: !!PASSPHRASES ? PASSPHRASES.split(":") : undefined,
+    passphrases: PASSPHRASES ? PASSPHRASES.split(":") : undefined,
     jwtPublicKey: JWT_PUBLIC_KEY,
     runningInDocker: Boolean(RUNNING_IN_DOCKER),
     disableTelemetry: Boolean(DISABLE_TELEMETRY),

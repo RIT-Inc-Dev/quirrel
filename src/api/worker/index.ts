@@ -1,22 +1,22 @@
-import { decodeQueueDescriptor } from "../shared/queue-descriptor";
-import { UsageMeter } from "../shared/usage-meter";
+import type { Redis } from "ioredis";
 import fetch from "node-fetch";
-import { TokenRepo } from "../shared/token-repo";
-import { asymmetric, symmetric } from "secure-webhooks";
-import { Redis } from "ioredis";
-import { Telemetrist } from "../shared/telemetrist";
-import { createOwl } from "../shared/owl";
-import type { Logger } from "../shared/logger";
-import { ssrfFilter } from "./ssrf-filter";
 import { PostHog } from "posthog-node";
+import { asymmetric, symmetric } from "secure-webhooks";
+import type { Logger } from "../shared/logger";
+import { createOwl } from "../shared/owl";
+import { decodeQueueDescriptor } from "../shared/queue-descriptor";
+import { Telemetrist } from "../shared/telemetrist";
+import { TokenRepo } from "../shared/token-repo";
+import { UsageMeter } from "../shared/usage-meter";
+import { ssrfFilter } from "./ssrf-filter";
 
-export interface ExecutionError {
+export type ExecutionError = {
   toString(): string;
   endpoint: string;
   tokenId: string;
   responseBody: string;
   responseStatus: number;
-}
+};
 
 export function replaceLocalhostWithDockerHost(_url: string): string {
   const url = new URL(_url);
@@ -26,7 +26,7 @@ export function replaceLocalhostWithDockerHost(_url: string): string {
   return url.toString();
 }
 
-export interface QuirrelWorkerConfig {
+export type QuirrelWorkerConfig = {
   redisFactory: () => Redis;
   enableUsageMetering?: boolean;
   runningInDocker?: boolean;
@@ -37,7 +37,7 @@ export interface QuirrelWorkerConfig {
   webhookSigningPrivateKey?: string;
   enableSSRFPrevention?: boolean;
   postHogApiKey?: string;
-}
+};
 
 export async function createWorker({
   redisFactory,
@@ -60,12 +60,12 @@ export async function createWorker({
     ? undefined
     : new TokenRepo(redisClient);
 
-  let usageMeter: UsageMeter | undefined = undefined;
+  let usageMeter: UsageMeter | undefined;
   if (enableUsageMetering) {
     usageMeter = new UsageMeter(redisClient);
   }
 
-  let postHog: PostHog | undefined = undefined;
+  let postHog: PostHog | undefined;
   if (postHogApiKey) {
     postHog = new PostHog(postHogApiKey, {
       host: "https://app.posthog.com",
@@ -76,7 +76,7 @@ export async function createWorker({
     redisFactory,
     logger,
     incidentReceiver,
-    telemetrist
+    telemetrist,
   );
 
   const worker = await owl.createWorker(async (job, ack, span) => {
@@ -108,7 +108,7 @@ export async function createWorker({
       if (webhookSigningPrivateKey) {
         headers["x-quirrel-signature"] = asymmetric.sign(
           payload,
-          webhookSigningPrivateKey
+          webhookSigningPrivateKey,
         );
       } else {
         const token = await tokenRepo?.getById(tokenId);

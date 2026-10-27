@@ -1,8 +1,9 @@
 require("../shared/tracer")("quirrel-scheduler");
-import { createServer } from ".";
+
 import { cliWithConfig } from "../../shared/cliWithConfig";
 import { createRedisFactory } from "../shared/create-redis";
 import { StructuredLogger } from "../shared/structured-logger";
+import { createServer } from ".";
 
 cliWithConfig(async (config) => {
   const {
@@ -21,13 +22,13 @@ cliWithConfig(async (config) => {
   const scheduler = await createServer({
     port: +PORT,
     host: HOST,
-    redisFactory: createRedisFactory(REDIS_URL ?? "redis://localhost:6379", { 
+    redisFactory: createRedisFactory(REDIS_URL ?? "redis://localhost:6379", {
       tlsCa: {
         base64: REDIS_TLS_CA_BASE64,
         path: REDIS_TLS_CA_FILE,
       },
     }),
-    passphrases: !!PASSPHRASES ? PASSPHRASES.split(":") : undefined,
+    passphrases: PASSPHRASES ? PASSPHRASES.split(":") : undefined,
     jwtPublicKey: JWT_PUBLIC_KEY,
     runningInDocker: Boolean(RUNNING_IN_DOCKER),
     disableTelemetry: Boolean(DISABLE_TELEMETRY),

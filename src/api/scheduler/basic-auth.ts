@@ -1,14 +1,14 @@
-import { FastifyPluginCallback } from "fastify";
 import fastifyBasicAuth from "@fastify/basic-auth";
+import type { FastifyPluginCallback } from "fastify";
 import fp from "fastify-plugin";
 
-interface BasicAuthPluginOpts {
+type BasicAuthPluginOpts = {
   passphrases: string[];
-}
+};
 
 const basicAuthPlugin: FastifyPluginCallback<BasicAuthPluginOpts> = async (
   fastify,
-  opts
+  opts,
 ) => {
   fastify.register(fastifyBasicAuth, {
     validate(username, password, req, reply, done) {
@@ -21,6 +21,6 @@ const basicAuthPlugin: FastifyPluginCallback<BasicAuthPluginOpts> = async (
   });
 };
 
-export default (fp as any)(basicAuthPlugin) as FastifyPluginCallback<
-  BasicAuthPluginOpts
->;
+export default (fp as any)(
+  basicAuthPlugin,
+) as FastifyPluginCallback<BasicAuthPluginOpts>;

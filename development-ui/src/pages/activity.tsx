@@ -17,7 +17,7 @@ export default function Activity() {
   return (
     <Table
       items={activity}
-      extractKey={(item) => "" + item.date}
+      extractKey={(item) => `${item.date}`}
       columns={[
         {
           title: "Time",

@@ -1,18 +1,17 @@
-import { FastifyPluginCallback } from "fastify";
 import * as Sentry from "@sentry/node";
+import type { FastifyPluginCallback } from "fastify";
 import fp from "fastify-plugin";
 import pack from "../../../package.json";
 
-interface SentryPluginOptions {}
+type SentryPluginOptions = {};
 
 const sentryPlugin: FastifyPluginCallback<SentryPluginOptions> = (
   fastify,
   opts,
-  done
+  done,
 ) => {
   Sentry.init({
-    dsn:
-      "https://3f2af43f2e7d423b9c258ba4373e8be2@o462664.ingest.sentry.io/5466383",
+    dsn: "https://3f2af43f2e7d423b9c258ba4373e8be2@o462664.ingest.sentry.io/5466383",
     tracesSampleRate: 0.1,
     environment: process.env.NODE_ENV,
     release: pack.version,
@@ -40,6 +39,6 @@ const sentryPlugin: FastifyPluginCallback<SentryPluginOptions> = (
   done();
 };
 
-export default (fp as any)(sentryPlugin) as FastifyPluginCallback<
-  SentryPluginOptions
->;
+export default (fp as any)(
+  sentryPlugin,
+) as FastifyPluginCallback<SentryPluginOptions>;

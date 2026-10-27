@@ -1,10 +1,10 @@
-import { run } from "./runQuirrel";
-import fastify, { FastifyInstance } from "fastify";
+import type http from "node:http";
 import delay from "delay";
+import fastify, { type FastifyInstance } from "fastify";
 import { verify } from "secure-webhooks";
-import type http from "http";
 import request from "supertest";
 import { describeAcrossBackends } from "../../client/test/util";
+import { run } from "./runQuirrel";
 
 const passphrase = "hello";
 
@@ -33,9 +33,11 @@ describeAcrossBackends("Authenticated Jobs", (backend) => {
       reply.status(200).send("OK");
     });
 
-    endpoint = encodeURIComponent(await server.listen({
-      port: 0,
-    }));
+    endpoint = encodeURIComponent(
+      await server.listen({
+        port: 0,
+      }),
+    );
   });
 
   afterAll(async () => {
@@ -49,14 +51,14 @@ describeAcrossBackends("Authenticated Jobs", (backend) => {
       .expect(201);
 
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: JSON.stringify({ foo: "bar" }),
       })
       .expect(401);
 
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .auth(token, { type: "bearer" })
       .send({
         body: JSON.stringify({ foo: "bar" }),
@@ -70,7 +72,7 @@ describeAcrossBackends("Authenticated Jobs", (backend) => {
     expect(verify(lastBody, token, lastSignature)).toBe(true);
 
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .auth(token, { type: "bearer" })
       .send({
         body: JSON.stringify({ foo: "long-standing" }),
@@ -89,7 +91,7 @@ describeAcrossBackends("Authenticated Jobs", (backend) => {
       .expect(204);
 
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .auth(token, { type: "bearer" })
       .send({
         body: JSON.stringify({ foo: "bar" }),
@@ -102,7 +104,7 @@ describeAcrossBackends("Authenticated Jobs", (backend) => {
       .expect(201);
 
     await request(quirrel)
-      .get("/queues/" + endpoint)
+      .get(`/queues/${endpoint}`)
       .auth(newToken, { type: "bearer" })
       .expect(200, { cursor: null, jobs: [] });
 
@@ -130,7 +132,7 @@ describeAcrossBackends("Authenticated Jobs", (backend) => {
       .expect(201);
 
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .auth("this.is.a.project", passphrase)
       .send({
         body: JSON.stringify({ foo: "bar" }),
@@ -152,7 +154,7 @@ describeAcrossBackends("Authenticated Jobs", (backend) => {
       });
 
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .set("x-quirrel-count-usage", "true")
       .auth("this.is.a.project", passphrase)
       .send({

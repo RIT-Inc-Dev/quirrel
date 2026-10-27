@@ -15,7 +15,7 @@ describe("DX", () => {
     describe("in dev mode", () => {
       it("defaults endpoints to http", async () => {
         expect((quirrel as any).baseUrl).toBe(
-          "https://quirrel.mock.com/queues/http%253A%252F%252Fanysite.com%252Fapi%252FsomeAPI"
+          "https://quirrel.mock.com/queues/http%253A%252F%252Fanysite.com%252Fapi%252FsomeAPI",
         );
       });
     });
@@ -34,7 +34,7 @@ describe("DX", () => {
           },
         });
         expect((quirrel as any).baseUrl).toBe(
-          "https://quirrel.mock.com/queues/https%253A%252F%252Fanysite.com%252Fapi%252FsomeAPI"
+          "https://quirrel.mock.com/queues/https%253A%252F%252Fanysite.com%252Fapi%252FsomeAPI",
         );
         process.env.NODE_ENV = oldEnv;
       });
@@ -44,11 +44,11 @@ describe("DX", () => {
   describe("when given a runAt in the past", () => {
     it("throws immediately", async () => {
       await expect(() =>
-        quirrel.enqueue("", { runAt: new Date(0) })
+        quirrel.enqueue("", { runAt: new Date(0) }),
       ).rejects.toThrowError("runAt must not be in the past");
 
       await expect(() =>
-        quirrel.enqueue("", { delay: -1 })
+        quirrel.enqueue("", { delay: -1 }),
       ).rejects.toThrowError("delay must be positive");
     });
   });
@@ -59,7 +59,7 @@ describe("DX", () => {
         quirrel.enqueue("", {
           retry: ["1min"],
           repeat: { every: "200ms", times: 5 },
-        })
+        }),
       ).rejects.toThrowError("retry and repeat cannot be used together");
     });
   });
@@ -69,7 +69,7 @@ describe("DX", () => {
       await expect(() =>
         quirrel.enqueue("", {
           override: true,
-        })
+        }),
       ).rejects.toThrowError("override requires id");
     });
   });

@@ -12,8 +12,8 @@ describe("owl config", () => {
         expect(
           cron(
             new Date(2020, 10, 10, 10, 10, 10, 0),
-            "* * * * * *" // every second
-          )
+            "* * * * * *", // every second
+          ),
         ).toEqual(new Date(2020, 10, 10, 10, 10, 11, 0));
       });
     });
@@ -22,18 +22,18 @@ describe("owl config", () => {
       expect(
         cron(
           new Date("2021-04-24T12:35:44.447Z"),
-          "@daily;Europe/Berlin" // every second
-        )
+          "@daily;Europe/Berlin", // every second
+        ),
       ).toEqual(new Date("2021-04-25T00:00:00.000+02:00"));
     });
 
     describe("when using L (last day)", () => {
       it("returns the correct last day of the month (repro #230)", () => {
         expect(cron(new Date("2020-03-30"), "0 0 10 L * *")).toEqual(
-          new Date("2020-03-31T10:00:00Z")
+          new Date("2020-03-31T10:00:00Z"),
         );
         expect(cron(new Date("2020-04-29"), "0 0 10 L * *")).toEqual(
-          new Date("2020-04-30T10:00:00Z")
+          new Date("2020-04-30T10:00:00Z"),
         );
       });
     });
@@ -44,8 +44,8 @@ describe("owl config", () => {
       expect(
         every(
           new Date(2020, 10, 10, 10, 10, 10, 0),
-          "1000" // every second)
-        )
+          "1000", // every second)
+        ),
       ).toEqual(new Date(2020, 10, 10, 10, 10, 11, 0));
     });
   });

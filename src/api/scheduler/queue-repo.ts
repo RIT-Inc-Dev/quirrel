@@ -1,9 +1,9 @@
 import type { Redis } from "ioredis";
-import { JobsRepo } from "./jobs-repo";
+import type { JobsRepo } from "./jobs-repo";
 
 export function idempotent<Args extends any[]>(
   doIt: (...args: Args) => Promise<void>,
-  keyBy: (...args: Args) => string = (...args) => args.join(";")
+  keyBy: (...args: Args) => string = (...args) => args.join(";"),
 ) {
   const executedKeys = new Set<string>();
 
@@ -21,7 +21,7 @@ export function idempotent<Args extends any[]>(
 export class QueueRepo {
   constructor(
     private readonly redis: Redis,
-    private readonly jobsRepo: JobsRepo
+    private readonly jobsRepo: JobsRepo,
   ) {}
 
   private isMigrated = process.env.SKIP_QUEUE_REPO_MIGRATION === "true";

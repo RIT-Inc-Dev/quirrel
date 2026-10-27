@@ -1,5 +1,5 @@
-import { run } from "./runQuirrel";
 import request from "supertest";
+import { run } from "./runQuirrel";
 
 test("rate limiter", async () => {
   const env = await run("Mock", {
@@ -8,7 +8,7 @@ test("rate limiter", async () => {
     },
   });
 
-  const endpoint = "/queues/" + encodeURIComponent("https://example.com");
+  const endpoint = `/queues/${encodeURIComponent("https://example.com")}`;
 
   const req = (token = "") =>
     request(env.server)

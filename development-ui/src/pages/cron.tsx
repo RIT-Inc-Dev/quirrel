@@ -19,9 +19,9 @@ export default function Cron() {
         {
           title: "Schedule",
           render: (job) => {
-            const cron = job.repeat?.cron!;
+            const cron = job.repeat?.cron as string;
             const timezone = job.repeat?.cronTimezone;
-            
+
             if (!timezone || timezone === "Etc/UTC") {
               return cron;
             }

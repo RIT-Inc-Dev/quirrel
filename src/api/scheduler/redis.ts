@@ -1,22 +1,23 @@
-import { FastifyPluginCallback } from "fastify";
+import type { FastifyPluginCallback } from "fastify";
 import fp from "fastify-plugin";
-import { Redis } from "ioredis";
+import type { Redis } from "ioredis";
 
 declare module "fastify" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface
   interface FastifyInstance {
     redis: Redis;
     redisFactory: () => Redis;
   }
 }
 
-interface RedisPluginOpts {
+type RedisPluginOpts = {
   redisFactory: () => Redis;
-}
+};
 
 const redisPlugin: FastifyPluginCallback<RedisPluginOpts> = (
   fastify,
   { redisFactory },
-  done
+  done,
 ) => {
   const client = redisFactory();
   fastify.decorate("redis", client);
@@ -29,6 +30,6 @@ const redisPlugin: FastifyPluginCallback<RedisPluginOpts> = (
   client.addListener("ready", done);
 };
 
-export default (fp as any)(redisPlugin) as FastifyPluginCallback<
-  RedisPluginOpts
->;
+export default (fp as any)(
+  redisPlugin,
+) as FastifyPluginCallback<RedisPluginOpts>;

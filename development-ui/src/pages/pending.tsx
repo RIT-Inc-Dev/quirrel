@@ -1,8 +1,8 @@
+import sortBy from "lodash/sortBy";
+import { DeleteButton } from "../components/DeleteButton";
 import { InvokeButton } from "../components/InvokeButton";
 import { Table } from "../components/Table";
 import { useQuirrel } from "../hooks/useQuirrel";
-import sortBy from "lodash/sortBy";
-import { DeleteButton } from "../components/DeleteButton";
 import { truncateUrl } from "../lib/truncate-url";
 
 export default function Pending() {

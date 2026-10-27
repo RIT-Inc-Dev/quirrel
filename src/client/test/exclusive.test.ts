@@ -1,9 +1,9 @@
-import { QuirrelClient } from "..";
+import http from "node:http";
 import { run } from "../../api/test/runQuirrel";
-import http from "http";
+import { QuirrelClient } from "..";
 import { getAddress, waitUntil } from "./util";
 
-export function sleep(ms: number) {
+function sleep(ms: number) {
   return new Promise((res) => setTimeout(res, ms));
 }
 
@@ -30,9 +30,9 @@ test("exclusive (repro #717)", async () => {
   const quirrel = new QuirrelClient({
     route: "",
     async handler(payload: number) {
-      log.push("started " + payload);
+      log.push(`started ${payload}`);
       await sleep(100);
-      log.push("finished " + payload);
+      log.push(`finished ${payload}`);
     },
     config: {
       quirrelBaseUrl: getAddress(server.server),

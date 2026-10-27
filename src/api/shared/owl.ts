@@ -1,22 +1,22 @@
 import Owl from "@quirrel/owl";
-import { Redis } from "ioredis";
+import type { Redis } from "ioredis";
 import { cron, every } from "../../shared/repeat";
+import type { ExecutionError } from "../worker";
 import { IncidentForwarder } from "./incident-forwarder";
+import type { Logger } from "./logger";
 import { decodeQueueDescriptor, toPlainEndpoint } from "./queue-descriptor";
-import { ExecutionError } from "../worker";
-import { Telemetrist } from "./telemetrist";
-import { Logger } from "./logger";
+import type { Telemetrist } from "./telemetrist";
 
 export async function createOwl(
   redisFactory: () => Redis,
   logger?: Logger,
   incidentReceiver?: { endpoint: string; passphrase: string },
-  telemetrist?: Telemetrist
+  telemetrist?: Telemetrist,
 ) {
   const incidentForwarder = incidentReceiver
     ? new IncidentForwarder(
         incidentReceiver.endpoint,
-        incidentReceiver.passphrase
+        incidentReceiver.passphrase,
       )
     : undefined;
 
@@ -42,7 +42,7 @@ export async function createOwl(
         {
           body: error.responseBody,
           status: error.responseStatus,
-        }
+        },
       );
 
       await telemetrist?.dispatch("execution_errored");

@@ -4,7 +4,7 @@ import pack from "../../../package.json";
 
 module.exports = (serviceName: string = "quirrel"): void => {
   if (process.env.DD_TRACE_ENABLED !== "true") {
-    return
+    return;
   }
 
   const tracer = ddTrace.init({
