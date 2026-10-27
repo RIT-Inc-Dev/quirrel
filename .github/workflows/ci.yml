@@ -35,8 +35,9 @@ jobs:
     - run: npm ci
       working-directory: development-ui
     - run: npm run lint
-    - run: npm run type-check
+    # development-ui type-checks against the built client (dist + root proxies)
     - run: npm run build
+    - run: npm run type-check
     - run: npm test -- --coverage
     - name: Coveralls Quirrel
       uses: coverallsapp/github-action@master
