@@ -82,6 +82,9 @@ export async function createServer({
 
   app.register(cors, {
     origin: "*",
+    // @fastify/cors >= 10 only allows simple methods by default; the
+    // development UI (another origin) also deletes and updates jobs
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   });
 
   const enableAdminBasedAuth = !!passphrases?.length;
