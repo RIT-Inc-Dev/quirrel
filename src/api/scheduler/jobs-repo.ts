@@ -6,7 +6,7 @@ import {
   isPlainEndpoint,
   toPlainEndpoint,
 } from "../shared/queue-descriptor";
-import * as uuid from "uuid";
+import { randomUUID } from "crypto";
 import { cron, embedTimezone, parseTimezonedCron } from "../../shared/repeat";
 import Owl, { Closable, Job } from "@quirrel/owl";
 import { QueueRepo } from "./queue-repo";
@@ -259,7 +259,7 @@ export class JobsRepo implements Closable {
     }: EnqueueJob
   ) {
     if (typeof id === "undefined") {
-      id = uuid.v4();
+      id = randomUUID();
     }
 
     let runAt: Date | undefined = undefined;

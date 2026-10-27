@@ -1,5 +1,5 @@
 import type { Redis } from "ioredis";
-import * as uuid from "uuid";
+import { randomUUID } from "crypto";
 
 const TOKEN_ID = "tokens:token-id";
 const ID_TOKEN = "tokens:id-token";
@@ -8,7 +8,7 @@ export class TokenRepo {
   constructor(private readonly redis: Redis) {}
 
   async create(id: string) {
-    const token = uuid.v4();
+    const token = randomUUID();
 
     await this.redis.eval(
       `

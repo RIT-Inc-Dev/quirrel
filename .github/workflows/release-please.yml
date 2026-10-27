@@ -13,13 +13,13 @@ jobs:
           token: ${{ secrets.RELEASE_PLEASE_GH_PAT }}
           release-type: node
           package-name: 'quirrel'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         if: ${{ steps.release.outputs.release_created }}
-      - uses: actions/setup-node@v3
+      # Node.js version comes from mise.toml
+      - uses: jdx/mise-action@v3
+        if: ${{ steps.release.outputs.release_created }}
+      - uses: actions/setup-node@v5
         with:
-          node-version: '16'
-          cache: 'npm'
-          check-latest: true
           registry-url: 'https://registry.npmjs.org'
         if: ${{ steps.release.outputs.release_created }}
       - run: npm ci

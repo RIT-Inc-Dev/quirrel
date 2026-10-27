@@ -25,7 +25,7 @@
   "module": "dist/esm/src/index.js",
   "version": "1.14.1-rit-3",
   "engines": {
-    "node": "20 || 22 || 24"
+    "node": ">=24.22.1"
   },
   "bin": {
     "quirrel": "cli.js"
@@ -52,12 +52,11 @@
     "@types/js-yaml": "4.0.5",
     "@types/jsonwebtoken": "8.5.9",
     "@types/ms": "0.7.31",
-    "@types/node": "20.19.43",
+    "@types/node": "24.19.2",
     "@types/node-fetch": "2.6.2",
     "@types/parse-gitignore": "1.0.0",
     "@types/redis": "4.0.10",
     "@types/supertest": "2.0.12",
-    "@types/uuid": "8.3.4",
     "@types/websocket": "1.0.5",
     "@types/ws": "8.5.5",
     "delay": "5.0.0",
@@ -93,7 +92,7 @@
     "cron-parser": "^4.6.0",
     "cross-fetch": "^3.1.4",
     "cross-spawn": "^7.0.6",
-    "dd-trace": "^3.5.0",
+    "dd-trace": "^6.21.0",
     "easy-table": "1.2.0",
     "expand-tilde": "2.0.2",
     "fast-glob": "^3.2.12",
@@ -112,11 +111,10 @@
     "parse-gitignore": "^1.0.1",
     "pino": "^9.14.0",
     "plausible-telemetry": "0.1.0",
-    "posthog-node": "^2.1.0",
+    "posthog-node": "5.57.2",
     "secure-e2ee": "0.4.0",
     "secure-webhooks": "^0.3.0",
     "superjson": "^1.10.1",
-    "uuid": "^9.0.0",
-    "zod": "^3.9.8"
+    "zod": "4.6.7"
   }
 }
