@@ -24,6 +24,23 @@ bun run test:node   # node:test against dist, for Node-only paths such as SSRF p
 - Tests live next to the code as `*.test.ts` / `*.spec.ts` and import from `bun:test`. All test files share one process; `test/setup.ts` restores `process.env` after each test.
 - Use `type` instead of `interface`, except for module augmentation (`declare module "fastify"`).
 
+### Releasing
+
+Versions follow `<upstream version>-rit-<N>` (e.g. `1.14.1-rit-4`).
+
+1. Open a PR to `feature/rit` that bumps `version` in `package.json`, and merge it.
+2. Tag the merge commit and push the tag:
+
+   ```sh
+   git switch feature/rit && git pull
+   git tag v1.14.1-rit-4
+   git push origin v1.14.1-rit-4
+   ```
+
+3. `.github/workflows/release.yml` checks that the tag matches `package.json`, builds, publishes `@rit-inc-dev/quirrel` to GitHub Packages, pushes `ghcr.io/rit-inc-dev/quirrel:<version>` and creates a GitHub Release.
+
+Consumers (e.g. `mcwf-web`) then bump both the npm package and the Docker image tag.
+
 ---
 
 🎉 Quirrel joins Netlify. [Learn more](https://dev.to/quirrel/quirrel-is-acquired-and-i-am-joining-netlify-dha) 🎉

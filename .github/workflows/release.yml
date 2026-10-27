@@ -1,0 +1,68 @@
+name: Release
+
+# Bump "version" in package.json (x.y.z-rit-N) via a PR to feature/rit,
+# then push the matching tag: git tag v1.14.1-rit-4 && git push origin v1.14.1-rit-4
+on:
+  push:
+    tags:
+      - "v*-rit*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # Node.js and Bun versions come from mise.toml
+      - uses: jdx/mise-action@v3
+
+      - name: Check tag matches package.json version
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+
+      - uses: actions/setup-node@v5
+        with:
+          registry-url: https://npm.pkg.github.com/
+          scope: "@rit-inc-dev"
+      # Already built above; skip prepack. npm requires an explicit dist-tag
+      # for prerelease-style versions such as 1.14.1-rit-4.
+      - run: npm publish --ignore-scripts --tag latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
