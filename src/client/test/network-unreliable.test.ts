@@ -9,7 +9,7 @@ test("network unreliable", async () => {
       callNumber++;
       if (callNumber === 1) {
         // abort connection
-        res.socket.end();
+        res.socket?.end();
       } else if (callNumber === 2) {
         res.statusCode = 200;
         res.end();

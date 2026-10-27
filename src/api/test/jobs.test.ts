@@ -112,7 +112,7 @@ describeAcrossBackends("Jobs", (backend) => {
       .send({ body: JSON.stringify({ foo: "bar" }), delay: -1 })
       .expect(
         400,
-        '{"statusCode":400,"error":"Bad Request","message":"body/delay must be >= 0"}'
+        '{"statusCode":400,"code":"FST_ERR_VALIDATION","error":"Bad Request","message":"body/delay must be >= 0"}'
       );
   });
 
@@ -546,6 +546,7 @@ describeAcrossBackends("Jobs", (backend) => {
       })
       .expect(400, {
         statusCode: 400,
+        code: "FST_ERR_VALIDATION",
         error: "Bad Request",
         message: "body/repeat/times must be >= 1",
       });
