@@ -1,12 +1,12 @@
-import { Command } from "commander";
-import { promises as fs } from "fs";
+import { promises as fs } from "node:fs";
+import type { Command } from "commander";
+import Table from "easy-table";
 import { QuirrelClient } from "../../client";
+import * as config from "../../client/config";
 import {
-  RouteScheduleManifest,
+  type RouteScheduleManifest,
   RouteScheduleManifestSchema,
 } from "./detect-cron";
-import * as config from "../../client/config";
-import Table from "easy-table";
 
 async function clearOldInstance() {
   const client = new QuirrelClient({
@@ -21,7 +21,7 @@ async function clearOldInstance() {
     method: "PUT",
     body: JSON.stringify({
       baseUrl: config.withoutTrailingSlash(
-        config.prefixWithProtocol(config.getApplicationBaseUrl())
+        config.prefixWithProtocol(config.getApplicationBaseUrl()),
       ),
       crons: [],
     }),
@@ -29,7 +29,7 @@ async function clearOldInstance() {
   });
   if (endpointsResponse.status !== 200) {
     throw new Error(
-      "Failed to clear old instance: " + (await endpointsResponse.text())
+      `Failed to clear old instance: ${await endpointsResponse.text()}`,
     );
   }
   console.log("Cleared old instance.");
@@ -40,13 +40,13 @@ export function formatRouteScheduleMapAsTable(jobs: RouteScheduleManifest) {
     jobs.map((job) => ({
       Route: job.route,
       Schedule: job.schedule,
-    }))
+    })),
   );
 }
 export async function updateCron(
   scheduleMap: RouteScheduleManifest,
   dryRun: boolean,
-  production: boolean
+  production: boolean,
 ) {
   if (production) {
     process.env.NODE_ENV = "production";
@@ -67,7 +67,7 @@ export async function updateCron(
     method: "PUT",
     body: JSON.stringify({
       baseUrl: config.withoutTrailingSlash(
-        config.prefixWithProtocol(config.getApplicationBaseUrl())
+        config.prefixWithProtocol(config.getApplicationBaseUrl()),
       ),
       crons: scheduleMap,
       dryRun,
@@ -76,7 +76,7 @@ export async function updateCron(
   });
 
   if (endpointsResponse.status !== 200) {
-    console.error("Something went wrong: " + (await endpointsResponse.text()));
+    console.error(`Something went wrong: ${await endpointsResponse.text()}`);
     return;
   }
 
@@ -89,9 +89,11 @@ export async function updateCron(
   const { deleted } = (await endpointsResponse.json()) as { deleted: string[] };
   if (deleted.length > 0) {
     console.error(
-      `These jobs are obsolete, and ${dryRun ? "would be" : "were"} removed: `
+      `These jobs are obsolete, and ${dryRun ? "would be" : "were"} removed: `,
     );
-    deleted.forEach((route) => console.log(route));
+    for (const route of deleted) {
+      console.log(route);
+    }
   }
 
   if (!dryRun && config.getOldQuirrelBaseUrl()) {
@@ -103,21 +105,21 @@ export default function registerUpdateCron(program: Command) {
   program
     .command("update-cron [filename]")
     .description(
-      "Updates the Quirrel API with cron jobs that have been detected using detect-cron."
+      "Updates the Quirrel API with cron jobs that have been detected using detect-cron.",
     )
     .option("-d, --dry-run", "Only plan the update, don't execute.", false)
     .option("-p, --production", "Use production config.", false)
     .action(
       async (
         filename = "/dev/stdin",
-        { dryRun, production }: { dryRun: boolean; production: boolean }
+        { dryRun, production }: { dryRun: boolean; production: boolean },
       ) => {
         const routeScheduleMapString = await fs.readFile(filename, "utf-8");
         const routeScheduleMap = RouteScheduleManifestSchema.parse(
-          JSON.parse(routeScheduleMapString)
+          JSON.parse(routeScheduleMapString),
         );
 
         await updateCron(routeScheduleMap, dryRun, production);
-      }
+      },
     );
 }

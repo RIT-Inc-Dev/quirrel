@@ -1,36 +1,36 @@
+import type { IncomingHttpHeaders } from "node:http";
 import {
-  QuirrelClient,
-  EnqueueJobOpts,
-  EnqueueJobOptions,
-  Job,
   DefaultJobOptions,
+  EnqueueJobOptions,
+  EnqueueJobOpts,
+  Job,
+  QuirrelClient,
   QuirrelJobHandler,
-  QuirrelOptions,
+  type QuirrelOptions,
 } from "./client";
 import { registerDevelopmentDefaults } from "./client/config";
-import type { IncomingHttpHeaders } from "http";
 
-export interface NextApiRequest {
+export type NextApiRequest = {
   body: any;
   headers: IncomingHttpHeaders;
-}
+};
 
-export interface NextApiResponse {
+export type NextApiResponse = {
   setHeader(key: string, value: string): void;
   status(code: number): void;
   send(body: string): void;
-}
+};
 
 export type NextApiHandler = (
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) => void | Promise<void>;
 
 export {
-  Job,
-  EnqueueJobOpts,
-  EnqueueJobOptions,
   DefaultJobOptions,
+  EnqueueJobOptions,
+  EnqueueJobOpts,
+  Job,
   QuirrelJobHandler,
 };
 
@@ -67,7 +67,7 @@ export function Queue<Payload>(
     quirrel.enqueue(payload, options);
 
   nextApiHandler.enqueueMany = (
-    jobs: { payload: Payload; options?: EnqueueJobOptions }[]
+    jobs: { payload: Payload; options?: EnqueueJobOptions }[],
   ) => quirrel.enqueueMany(jobs);
 
   nextApiHandler.delete = (jobId: string) => quirrel.delete(jobId);
@@ -85,7 +85,7 @@ export function CronJob(
   route: string,
   cronSchedule: NonNullable<NonNullable<EnqueueJobOptions["repeat"]>["cron"]>,
   handler: () => Promise<void>,
-  options?: QuirrelOptions
+  options?: QuirrelOptions,
 ) {
   return Queue(route, handler, options) as unknown;
 }

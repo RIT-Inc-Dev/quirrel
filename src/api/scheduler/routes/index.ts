@@ -1,6 +1,6 @@
-import { FastifyPluginCallback } from "fastify";
+import * as path from "node:path";
 import fastifyStatic from "@fastify/static";
-import * as path from "path";
+import type { FastifyPluginCallback } from "fastify";
 
 const alternativeEntries = ["/", "/cron", "/pending", "/activity-log"];
 
@@ -13,7 +13,7 @@ const index: FastifyPluginCallback = (fastify, opts, done) => {
     setHeaders(res) {
       const auth = fastify.adminBasedAuthEnabled;
       const config = [auth];
-      res.setHeader("Set-Cookie", "Quirrel-UI-Config=" + config.join("-"));
+      res.setHeader("Set-Cookie", `Quirrel-UI-Config=${config.join("-")}`);
     },
   });
 
@@ -23,7 +23,7 @@ const index: FastifyPluginCallback = (fastify, opts, done) => {
       { schema: { hide: true } },
       async (request, reply) => {
         return reply.sendFile("fastify.html");
-      }
+      },
     );
   });
 

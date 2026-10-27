@@ -1,4 +1,3 @@
-import { run } from "./runQuirrel";
 import fastify from "fastify";
 import request from "supertest";
 import websocket from "websocket";
@@ -11,19 +10,22 @@ import {
   stopTime,
   waitUntil,
 } from "../../client/test/util";
+import { run } from "./runQuirrel";
 
 jest.setTimeout(20 * 1000);
 
 describeAcrossBackends("Activity", (backend) => {
   it("works", async () => {
-    const { server: quirrel, teardown: teardownQuirrel, redis } = await run(
-      backend
-    );
+    const {
+      server: quirrel,
+      teardown: teardownQuirrel,
+      redis,
+    } = await run(backend);
 
     await redis.flushall();
 
     let lastBody: any;
-    let bodies: any[] = [];
+    const bodies: any[] = [];
 
     const server = fastify();
     server.post("/", (request, reply) => {
@@ -32,9 +34,11 @@ describeAcrossBackends("Activity", (backend) => {
       reply.status(200).send("OK");
     });
 
-    const endpoint = encodeURIComponent(await server.listen({
-      port: 0
-    }));
+    const endpoint = encodeURIComponent(
+      await server.listen({
+        port: 0,
+      }),
+    );
     const client = new websocket.client();
 
     const log: any[] = [];
@@ -54,8 +58,8 @@ describeAcrossBackends("Activity", (backend) => {
             JSON.parse(
               message.type === "utf8"
                 ? message.utf8Data
-                : message.binaryData.toString()
-            )
+                : message.binaryData.toString(),
+            ),
           );
         });
 
@@ -72,7 +76,7 @@ describeAcrossBackends("Activity", (backend) => {
       });
 
       client.connect(
-        getAddress(quirrel).replace("http://", "ws://") + "/activity"
+        `${getAddress(quirrel).replace("http://", "ws://")}/activity`,
       );
     });
 
@@ -84,7 +88,7 @@ describeAcrossBackends("Activity", (backend) => {
       const {
         body: { id: job1id },
       } = await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: JSON.stringify({ foo: "bar" }),
           runAt: new Date(now).toISOString(),
@@ -96,7 +100,7 @@ describeAcrossBackends("Activity", (backend) => {
       const {
         body: { id: job2id },
       } = await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: JSON.stringify({ qux: "baz" }),
           runAt: new Date(now + 300).toISOString(),
@@ -106,7 +110,7 @@ describeAcrossBackends("Activity", (backend) => {
 
       await waitUntil(
         () => log.filter((entry) => entry[0] === "completed").length === 2,
-        500
+        500,
       );
     });
 

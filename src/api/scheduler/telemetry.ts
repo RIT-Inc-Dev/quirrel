@@ -1,26 +1,27 @@
-import { FastifyPluginCallback } from "fastify";
+import type { FastifyPluginCallback } from "fastify";
 import fp from "fastify-plugin";
 import { Telemetrist } from "../shared/telemetrist";
 
 declare module "fastify" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface
   interface FastifyInstance {
     telemetrist?: Telemetrist;
   }
 }
 
-interface TelemetryPluginOptions {
+type TelemetryPluginOptions = {
   runningInDocker: boolean;
-}
+};
 
 const telemetryPlugin: FastifyPluginCallback<TelemetryPluginOptions> = async (
   fastify,
-  opts
+  opts,
 ) => {
   const telemetrist = new Telemetrist(opts.runningInDocker);
 
   fastify.decorate("telemetrist", telemetrist);
 };
 
-export default (fp as any)(telemetryPlugin) as FastifyPluginCallback<
-  TelemetryPluginOptions
->;
+export default (fp as any)(
+  telemetryPlugin,
+) as FastifyPluginCallback<TelemetryPluginOptions>;

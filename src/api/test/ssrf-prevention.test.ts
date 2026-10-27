@@ -1,8 +1,8 @@
-import { run } from "./runQuirrel";
-import fastify, { FastifyInstance } from "fastify";
-import request from "supertest";
 import delay from "delay";
+import fastify, { type FastifyInstance } from "fastify";
+import request from "supertest";
 import { getAddress } from "../../client/test/util";
+import { run } from "./runQuirrel";
 
 describe("SSRF Prevention", () => {
   let server: FastifyInstance;
@@ -28,7 +28,7 @@ describe("SSRF Prevention", () => {
   });
 
   function testWithSSR(mode: "enabled" | "disabled") {
-    test("ssrf prevention " + mode, async () => {
+    test(`ssrf prevention ${mode}`, async () => {
       const res = await run("Mock", {
         enableSSRFPrevention: mode === "enabled",
       });
@@ -38,7 +38,7 @@ describe("SSRF Prevention", () => {
       await request(quirrel)
         .post(
           "/queues/" +
-            encodeURIComponent(getAddress(server.server) + "/database/drop")
+            encodeURIComponent(`${getAddress(server.server)}/database/drop`),
         )
         .send({ body: "dropthebase" })
         .expect(201);

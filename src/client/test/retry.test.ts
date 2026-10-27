@@ -1,6 +1,6 @@
-import { QuirrelClient } from "..";
+import http from "node:http";
 import { run } from "../../api/test/runQuirrel";
-import http from "http";
+import { QuirrelClient } from "..";
 import { expectToBeInRange, getAddress, makeSignal } from "./util";
 
 test("retry", async () => {
@@ -11,7 +11,7 @@ test("retry", async () => {
 
   const receiver = http
     .createServer((req, res) => {
-      $tries.signal("" + ++tries);
+      $tries.signal(`${++tries}`);
       res.statusCode = 500;
       res.end();
     })

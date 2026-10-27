@@ -1,14 +1,14 @@
-import { Logger } from "./logger";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import pino from "pino";
-import { JobDTO } from "../../client/job";
-import { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
+import type { JobDTO } from "../../client/job";
+import type { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
+import type { Logger } from "./logger";
 
 export class StructuredLogger implements Logger {
   constructor(
     public readonly log = pino({
       level: process.env.LOG_LEVEL || "trace",
-    })
+    }),
   ) {}
 
   started(address: string, telemetryEnabled: boolean) {
@@ -23,14 +23,14 @@ export class StructuredLogger implements Logger {
 
   executionErrored(
     job: { tokenId: string; id: string; endpoint: string; body: string },
-    error: string
+    error: string,
   ): void {
     this.log.error({ error, job }, "Caught error during execution");
   }
   jobCreated(
     job: JobDTO & {
       tokenId: string;
-    }
+    },
   ): void {
     this.log.info({ job }, "Created job.");
   }

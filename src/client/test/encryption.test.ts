@@ -1,7 +1,7 @@
-import { JobMeta, QuirrelClient } from "..";
-import { run } from "../../api/test/runQuirrel";
-import * as http from "http";
+import * as http from "node:http";
 import delay from "delay";
+import { run } from "../../api/test/runQuirrel";
+import { type JobMeta, QuirrelClient } from "..";
 import { getAddress } from "./util";
 
 test("encryption", async () => {
@@ -86,7 +86,7 @@ test("catchDecryptionErrors", async () => {
   });
 
   const result = await (quirrel as any).decryptAndDecodeBody(
-    "This is non-decryptable"
+    "This is non-decryptable",
   );
   expect(result).toEqual("This is non-decryptable");
 

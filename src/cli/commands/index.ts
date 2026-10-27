@@ -1,9 +1,9 @@
-import { QuirrelConfig, runQuirrel } from "../../api";
+import type { Command } from "commander";
 import IORedis from "ioredis";
+import { type QuirrelConfig, runQuirrel } from "../../api";
 import { createRedisFactory } from "../../api/shared/create-redis";
-import { CronDetector } from "../cron-detector";
-import { Command } from "commander";
 import { getApplicationBaseUrl } from "../../client/config";
+import { CronDetector } from "../cron-detector";
 
 function requireFrameworkClientForDevelopmentDefaults(framework: string) {
   require(`../../${framework}`);
@@ -27,7 +27,7 @@ export async function runQuirrelDev(
   config: Omit<QuirrelConfig, "redisFactory"> & {
     redisUrl?: string;
     cronCwd?: string;
-  }
+  },
 ) {
   const { redisUrl, cronCwd } = config;
   if (redisUrl) {
@@ -79,7 +79,7 @@ export default function registerRun(program: Command) {
     .option(
       "--passphrase <passphrase>",
       "secure the server with a passphrase",
-      collect
+      collect,
     )
     .action(
       async ({
@@ -111,6 +111,6 @@ export default function registerRun(program: Command) {
           await exit();
           process.exit();
         });
-      }
+      },
     );
 }

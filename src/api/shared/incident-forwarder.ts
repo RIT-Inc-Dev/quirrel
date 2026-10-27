@@ -3,7 +3,7 @@ import fetch from "cross-fetch";
 export class IncidentForwarder {
   constructor(
     private readonly incidentEndpoint: string,
-    private readonly passphrase: string
+    private readonly passphrase: string,
   ) {}
 
   async dispatch(
@@ -14,7 +14,7 @@ export class IncidentForwarder {
       payload: string;
       runAt: Date;
     },
-    incident: { status: number; body: string }
+    incident: { status: number; body: string },
   ) {
     try {
       fetch(this.incidentEndpoint, {

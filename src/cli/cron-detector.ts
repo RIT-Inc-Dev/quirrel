@@ -1,20 +1,19 @@
-import { cronExpression, timezone } from "../client/index";
-import { cron } from "../client/index";
-import fs from "fs";
-import * as chokidar from "chokidar";
-import { parseChokidarRulesFromGitignore } from "./parse-gitignore";
+import fs from "node:fs";
+import path from "node:path";
 import * as babel from "@babel/parser";
 import traverse from "@babel/traverse";
-import path from "path";
+import * as chokidar from "chokidar";
 import * as config from "../client/config";
+import { cron, timezone } from "../client/index";
+import { parseChokidarRulesFromGitignore } from "./parse-gitignore";
 
-export interface DetectedCronJob {
+export type DetectedCronJob = {
   route: string;
   schedule: string;
   timezone: string;
   framework: string;
   isValid: boolean;
-}
+};
 
 export function detectQuirrelCronJob(file: string): DetectedCronJob | null {
   const quirrelImport = /["']quirrel\/(.*)["']/.exec(file);
@@ -100,7 +99,7 @@ export class CronDetector {
 
   constructor(
     private readonly cwd: string,
-    private readonly onChange?: (jobs: DetectedCronJob[]) => void
+    private readonly onChange?: (jobs: DetectedCronJob[]) => void,
   ) {
     const rules = parseChokidarRulesFromGitignore(cwd);
     this.watcher = chokidar.watch(["**/*.[jt]s", "**/*.[jt]sx"], {
@@ -181,7 +180,7 @@ export class CronDetector {
 
       if (!newJob.isValid) {
         console.error(
-          `🚨Encountered invalid cron expression: ${newJob.schedule}`
+          `🚨Encountered invalid cron expression: ${newJob.schedule}`,
         );
         return;
       }

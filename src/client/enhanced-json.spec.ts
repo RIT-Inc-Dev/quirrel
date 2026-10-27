@@ -32,7 +32,7 @@ describe("EnhancedJSON", () => {
       expect(EnhancedJSON.parse(EnhancedJSON.stringify(input))).toEqual(input);
 
       expect(
-        EnhancedJSON.parse(EnhancedJSON.stringify(new Date(10000)))
+        EnhancedJSON.parse(EnhancedJSON.stringify(new Date(10000))),
       ).toEqual(new Date(10000));
     });
   });
@@ -40,7 +40,7 @@ describe("EnhancedJSON", () => {
   it("should include SuperJSON stuff when needed", () => {
     const input = new Date(10000);
     expect(EnhancedJSON.stringify(input)).toEqual(
-      '{"json":"1970-01-01T00:00:10.000Z","_superjson":{"values":["Date"]}}'
+      '{"json":"1970-01-01T00:00:10.000Z","_superjson":{"values":["Date"]}}',
     );
     expect(EnhancedJSON.parse(EnhancedJSON.stringify(input))).toEqual(input);
   });

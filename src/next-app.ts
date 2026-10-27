@@ -1,21 +1,16 @@
 import {
-  QuirrelClient,
+  DefaultJobOptions,
   EnqueueJobOptions,
   Job,
-  DefaultJobOptions,
+  QuirrelClient,
   QuirrelJobHandler,
-  QuirrelOptions,
+  type QuirrelOptions,
 } from "./client";
 import { registerDevelopmentDefaults } from "./client/config";
 
 type NextApiHandler = (req: Request) => Response | Promise<Response>;
 
-export {
-  Job,
-  EnqueueJobOptions,
-  DefaultJobOptions,
-  QuirrelJobHandler,
-};
+export { DefaultJobOptions, EnqueueJobOptions, Job, QuirrelJobHandler };
 
 registerDevelopmentDefaults({
   applicationPort: 3000,
@@ -34,13 +29,13 @@ export type Queue<Payload> = Omit<
  *      ...logic goes here
  *   }
  * );
- * 
+ *
  * export const POST = sampleQueue;
  */
 export function Queue<Payload>(
   route: string,
   handler: QuirrelJobHandler<Payload>,
-  options?: QuirrelOptions
+  options?: QuirrelOptions,
 ): Queue<Payload> & NextApiHandler {
   const quirrel = new QuirrelClient<Payload>({
     options,
@@ -51,7 +46,7 @@ export function Queue<Payload>(
   async function nextApiHandler(req: Request): Promise<Response> {
     const { body, headers, status } = await quirrel.respondTo(
       await req.text(),
-      Object.fromEntries([...req.headers.entries()])
+      Object.fromEntries([...req.headers.entries()]),
     );
 
     return new Response(body, {
@@ -64,7 +59,7 @@ export function Queue<Payload>(
     quirrel.enqueue(payload, options);
 
   nextApiHandler.enqueueMany = (
-    jobs: { payload: Payload; options?: EnqueueJobOptions }[]
+    jobs: { payload: Payload; options?: EnqueueJobOptions }[],
   ) => quirrel.enqueueMany(jobs);
 
   nextApiHandler.delete = (jobId: string) => quirrel.delete(jobId);
@@ -78,7 +73,6 @@ export function Queue<Payload>(
   return nextApiHandler;
 }
 
-
 /**
  * @example // usage in route handler file: api/cronjobs/sample
  * const sampleCron = CronJob(
@@ -88,14 +82,14 @@ export function Queue<Payload>(
  *      ...logic goes here
  *   }
  * );
- * 
+ *
  * export const POST = sampleCron;
  */
 export function CronJob(
   route: string,
   cronSchedule: NonNullable<NonNullable<EnqueueJobOptions["repeat"]>["cron"]>,
   handler: () => Promise<void>,
-  options?: QuirrelOptions
+  options?: QuirrelOptions,
 ) {
   return Queue(route, handler, options) as unknown;
 }

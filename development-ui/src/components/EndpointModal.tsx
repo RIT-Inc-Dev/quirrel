@@ -24,11 +24,11 @@ export function EndpointModal() {
   const { fixedEndpoint } = useContext(ConfigContext);
 
   const [endpoint, setEndpoint] = useState(
-    connectedTo?.baseUrl ?? fixedEndpoint ?? ""
+    connectedTo?.baseUrl ?? fixedEndpoint ?? "",
   );
   const [token, setToken] = useState(connectedTo?.token ?? "");
   const [encryptionSecret, setEncryptionSecret] = useState(
-    connectedTo?.encryptionSecret ?? ""
+    connectedTo?.encryptionSecret ?? "",
   );
 
   const [bookmarkUrl, setBookmarkUrl] = useState<string>();
@@ -225,6 +225,7 @@ export function EndpointModal() {
                     className="mt-1 text-gray-800 block overflow-ellipsis overflow-hidden bg-gray-200 rounded border-2 border-gray-300 p-1"
                     href={bookmarkUrl}
                     target="_blank"
+                    rel="noopener"
                   >
                     {bookmarkUrl}
                   </a>
@@ -245,7 +246,7 @@ export function EndpointModal() {
                 connectTo({
                   baseUrl: endpoint,
                   token,
-                  encryptionSecret: !!encryptionSecret
+                  encryptionSecret: encryptionSecret
                     ? encryptionSecret
                     : undefined,
                 });

@@ -1,8 +1,8 @@
-import { QuirrelClient } from "..";
-import { run } from "../../api/test/runQuirrel";
-import { getAddress } from "./util";
-import * as http from "http";
+import * as http from "node:http";
 import delay from "delay";
+import { run } from "../../api/test/runQuirrel";
+import { QuirrelClient } from "..";
+import { getAddress } from "./util";
 
 test("cron payload with encryption", async () => {
   const server = await run("Mock");

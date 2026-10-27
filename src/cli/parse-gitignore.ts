@@ -1,14 +1,14 @@
 // adapted from https://github.com/blitz-js/blitz/blob/59c839c65fb96f21535491f4c167998fb2c6707c/packages/server/src/parse-chokidar-rules-from-gitignore.ts
 
+import fs from "node:fs";
 import spawn from "cross-spawn";
 import expandTilde from "expand-tilde";
 import fastGlob from "fast-glob";
-import fs from "fs";
 import parseGitignore from "parse-gitignore";
 
 function partition<A, B>(
   arr: (A | B)[],
-  predicate: (v: A | B) => v is A
+  predicate: (v: A | B) => v is A,
 ): [truthy: A[], falsy: B[]] {
   const truthy: A[] = [];
   const falsy: B[] = [];
@@ -30,7 +30,7 @@ function globalGitIgnore() {
   const versionResult = spawn.sync("git", ["version"]);
   if (!(versionResult.status === 0)) {
     console.log(
-      "Git doesn't seem to be installed. Get it here: https://git-scm.com/downloads."
+      "Git doesn't seem to be installed. Get it here: https://git-scm.com/downloads.",
     );
     return null;
   }
@@ -40,7 +40,7 @@ function globalGitIgnore() {
     ["config", "--get", "core.excludesfile"],
     {
       stdio: "pipe",
-    }
+    },
   );
   if (!(configResult.status === 0)) {
     // Git config core.excludesFile is unset. Inferring .gitignore file locations.
@@ -67,7 +67,7 @@ export function getAllGitIgnores(rootFolder: string) {
     [localRepoIgnore, `**/${localRepoIgnore}`, "**/.gitignore"],
     {
       cwd: rootFolder,
-    }
+    },
   );
 
   if (globalIgnore && fs.existsSync(globalIgnore)) files.push(globalIgnore);

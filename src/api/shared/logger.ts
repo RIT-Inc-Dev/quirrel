@@ -1,17 +1,17 @@
-import { JobDTO } from "../../client/job";
-import { DxLogger } from "./dx-logger";
-import { StructuredLogger } from "./structured-logger";
 import pino from "pino";
-import { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
+import type { JobDTO } from "../../client/job";
+import type { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
+import { DxLogger } from "./dx-logger";
 import { QuietLogger } from "./quiet-logger";
+import { StructuredLogger } from "./structured-logger";
 
-export interface Logger {
+export type Logger = {
   log?: pino.Logger;
   started(address: string, telemetryEnabled: boolean): void;
   jobCreated(
     job: JobDTO & {
       tokenId: string;
-    }
+    },
   ): void;
   cronUpdated(crons: QueuesUpdateCronBody, deleted: string[]): void;
   jobDeleted(job: { endpoint: string; id: string; tokenId: string }): void;
@@ -32,16 +32,16 @@ export interface Logger {
       endpoint: string;
       body: string;
     },
-    error: string
+    error: string,
   ): void;
   // ...
-}
+};
 
 export type LoggerType = "dx" | "structured" | "none" | "quiet" | Logger;
 
 export function getLogger(
   type?: LoggerType,
-  logger = pino({ level: process.env.LOG_LEVEL || "trace" })
+  logger = pino({ level: process.env.LOG_LEVEL || "trace" }),
 ): Logger | undefined {
   if (!type) {
     return undefined;

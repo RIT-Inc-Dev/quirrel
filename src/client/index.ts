@@ -1,27 +1,25 @@
-import { Job, JobDTO } from "./job";
-import * as config from "./config";
-import * as z from "zod";
-import type { IsExact, AssertTrue } from "conditional-type-checks";
-import Encryptor from "secure-e2ee";
-import { symmetric, asymmetric } from "secure-webhooks";
-import ms from "ms";
-import fetch from "cross-fetch";
+import type { IncomingHttpHeaders } from "node:http";
 import fetchRetry from "@vercel/fetch-retry";
-import type { IncomingHttpHeaders } from "http";
+import fetch from "cross-fetch";
+import ms from "ms";
+import Encryptor from "secure-e2ee";
+import { asymmetric, symmetric } from "secure-webhooks";
+import * as z from "zod";
 import pack from "../../package.json";
-import * as EnhancedJSON from "./enhanced-json";
 import { isValidCronExpression } from "../shared/is-valid-cron";
 import { isValidTimezone } from "../shared/repeat";
+import * as config from "./config";
+import * as EnhancedJSON from "./enhanced-json";
+import { Job, type JobDTO } from "./job";
 
 export { Job };
 
-export interface JobMeta
-  extends Pick<JobDTO, "id" | "count" | "exclusive" | "retry"> {
+export type JobMeta = Pick<JobDTO, "id" | "count" | "exclusive" | "retry"> & {
   /**
    * If this is a repeated job, the next repetition will be scheduled for this Date.
    */
   readonly nextRepetition?: Date;
-}
+};
 
 export type QuirrelLogger<Payload = unknown> = {
   receivedJob: (route: string, data: Payload) => void;
@@ -37,7 +35,7 @@ const defaultLogger: QuirrelLogger = {
 export type QuirrelJobHandler<T> = (job: T, meta: JobMeta) => Promise<void>;
 export type DefaultJobOptions = Pick<EnqueueJobOptions, "exclusive" | "retry">;
 
-interface CreateQuirrelClientArgs<T> {
+type CreateQuirrelClientArgs<T> = {
   route: string;
   handler: QuirrelJobHandler<T>;
   options?: QuirrelOptions<T>;
@@ -94,13 +92,13 @@ interface CreateQuirrelClientArgs<T> {
 
   fetch?: typeof fetch;
   catchDecryptionErrors?(error: unknown): void;
-}
+};
 
 const vercelMs = z
   .string()
   .regex(
     /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i,
-    "Please provide a valid time span, according to https://github.com/vercel/ms"
+    "Please provide a valid time span, according to https://github.com/vercel/ms",
   );
 
 const timeDuration = (fieldName = "duration") =>
@@ -113,7 +111,7 @@ export const cronExpression = z
   .string()
   .refine(
     isValidCronExpression,
-    "Please provide a valid Cron expression. See https://github.com/harrisiirak/cron-parser for reference"
+    "Please provide a valid Cron expression. See https://github.com/harrisiirak/cron-parser for reference",
   );
 
 export const timezone = z
@@ -153,7 +151,7 @@ type EnqueueJobOptionsSchema = z.TypeOf<typeof EnqueueJobOptionsSchema>;
  */
 export type EnqueueJobOpts = EnqueueJobOptions;
 
-export interface EnqueueJobOptions {
+export type EnqueueJobOptions = {
   /**
    * Can be used to make a job easier to manage.
    * If there's already a job with the same ID, this job will be trashed.
@@ -217,7 +215,7 @@ export interface EnqueueJobOptions {
      */
     cron?: string | [expression: string, timezone: string];
   };
-}
+};
 
 function parseDuration(value: number | string | undefined): number | undefined {
   if (!value) {
@@ -237,7 +235,7 @@ function runAtToDelay(value: Date) {
 
 function getEncryptor(
   encryptionSecret: string | undefined,
-  oldSecrets: string[] = []
+  oldSecrets: string[] = [],
 ) {
   if (!encryptionSecret) {
     return undefined;
@@ -247,7 +245,7 @@ function getEncryptor(
 }
 
 function getAuthHeaders(
-  token: string | undefined
+  token: string | undefined,
 ): { Authorization: string } | {} {
   if (!token) {
     return {};
@@ -256,9 +254,9 @@ function getAuthHeaders(
   return { Authorization: `Bearer ${token}` };
 }
 
-export interface QuirrelOptions<T = unknown> extends DefaultJobOptions {
+export type QuirrelOptions<T = unknown> = DefaultJobOptions & {
   logger?: QuirrelLogger<T>;
-}
+};
 
 export class QuirrelClient<T> {
   private handler;
@@ -292,8 +290,8 @@ export class QuirrelClient<T> {
       args.config?.quirrelBaseUrl ?? config.getQuirrelBaseUrl();
     this.applicationBaseUrl = config.withoutTrailingSlash(
       config.prefixWithProtocol(
-        args.config?.applicationBaseUrl ?? config.getApplicationBaseUrl()!
-      )
+        args.config?.applicationBaseUrl ?? config.getApplicationBaseUrl()!,
+      ),
     );
     this.quirrelBaseUrl = quirrelBaseUrl;
     this.token = args.config?.token ?? config.getQuirrelToken();
@@ -307,7 +305,7 @@ export class QuirrelClient<T> {
     };
     this.encryptor = getEncryptor(
       args.config?.encryptionSecret ?? config.getEncryptionSecret(),
-      args.config?.oldSecrets ?? config.getOldEncryptionSecrets() ?? undefined
+      args.config?.oldSecrets ?? config.getOldEncryptionSecrets() ?? undefined,
     );
     this.catchDecryptionErrors = args.catchDecryptionErrors;
     this.fetch = args.fetch ?? fetchRetry(fetch);
@@ -319,7 +317,9 @@ export class QuirrelClient<T> {
     return (
       this.quirrelBaseUrl +
       "/queues/" +
-      encodeURIComponent(encodeURIComponent(this.applicationBaseUrl + "/" + this.route))
+      encodeURIComponent(
+        encodeURIComponent(`${this.applicationBaseUrl}/${this.route}`),
+      )
     );
   }
 
@@ -331,7 +331,7 @@ export class QuirrelClient<T> {
     return (
       this.quirrelOldBaseUrl +
       "/queues/" +
-      encodeURIComponent(this.applicationBaseUrl + "/" + this.route)
+      encodeURIComponent(`${this.applicationBaseUrl}/${this.route}`)
     );
   }
 
@@ -348,7 +348,7 @@ export class QuirrelClient<T> {
 
   private async payloadAndOptionsToBody(
     payload: T,
-    options: EnqueueJobOptionsSchema
+    options: EnqueueJobOptionsSchema,
   ) {
     if (typeof payload === "undefined") {
       throw new Error("Passing `undefined` as Payload is not allowed");
@@ -403,7 +403,7 @@ export class QuirrelClient<T> {
           }
         : undefined,
       retry: (options.retry ?? this.defaultJobOptions?.retry)?.map(
-        parseDuration
+        parseDuration,
       ),
       override: options.override,
       exclusive: options.exclusive ?? this.defaultJobOptions?.exclusive,
@@ -419,7 +419,7 @@ export class QuirrelClient<T> {
 
     if (this.oldBaseUrl && !options.override && options.id) {
       const res = await this.fetchAgainstOld(
-        `/${encodeURIComponent(options.id)}`
+        `/${encodeURIComponent(options.id)}`,
       );
       if (res.status === 200) {
         return await this.toJob(await res.json());
@@ -448,8 +448,8 @@ export class QuirrelClient<T> {
 
     throw new Error(
       `Unexpected response while trying to enqueue "${JSON.stringify(
-        body
-      )}" to ${this.applicationBaseUrl}: ${await res.text()}`
+        body,
+      )}" to ${this.applicationBaseUrl}: ${await res.text()}`,
     );
   }
 
@@ -457,15 +457,15 @@ export class QuirrelClient<T> {
    * Enqueue multiple jobs
    */
   async enqueueMany(
-    jobs: { payload: T; options?: EnqueueJobOptions }[]
+    jobs: { payload: T; options?: EnqueueJobOptions }[],
   ): Promise<Job<T>[]> {
     const body = await Promise.all(
       jobs.map(({ payload, options = {} }) =>
-        this.payloadAndOptionsToBody(payload, options)
-      )
+        this.payloadAndOptionsToBody(payload, options),
+      ),
     );
 
-    const res = await this.fetch(this.baseUrl + "/batch", {
+    const res = await this.fetch(`${this.baseUrl}/batch`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -483,7 +483,7 @@ export class QuirrelClient<T> {
     throw new Error(
       `Unexpected response while trying to enqueue "${body}" to ${
         this.applicationBaseUrl
-      }: ${await res.text()}`
+      }: ${await res.text()}`,
     );
   }
 
@@ -532,7 +532,7 @@ export class QuirrelClient<T> {
     let cursor: number | null = 0;
 
     while (cursor !== null) {
-      const res = await this.fetchAgainstCurrent("?cursor=" + cursor);
+      const res = await this.fetchAgainstCurrent(`?cursor=${cursor}`);
 
       const json = await res.json();
 
@@ -550,7 +550,7 @@ export class QuirrelClient<T> {
       let cursor: number | null = 0;
 
       while (cursor !== null) {
-        const res = await this.fetchAgainstOld("?cursor=" + cursor);
+        const res = await this.fetchAgainstOld(`?cursor=${cursor}`);
 
         const json = await res.json();
 
@@ -607,7 +607,7 @@ export class QuirrelClient<T> {
    * @returns null if no job was found.
    */
   async getById(id: string): Promise<Job<T> | null> {
-    const res = await this.fetchAndRetryNotFound("/" + encodeURIComponent(id));
+    const res = await this.fetchAndRetryNotFound(`/${encodeURIComponent(id)}`);
 
     if (res.status === 404) {
       return null;
@@ -617,7 +617,7 @@ export class QuirrelClient<T> {
       return await this.toJob(await res.json());
     }
 
-    throw new Error("Unexpected response: " + (await res.text()));
+    throw new Error(`Unexpected response: ${await res.text()}`);
   }
 
   /**
@@ -625,7 +625,7 @@ export class QuirrelClient<T> {
    * @returns false if job could not be found.
    */
   async invoke(id: string): Promise<boolean> {
-    const res = await this.fetchAndRetryNotFound("/" + encodeURIComponent(id), {
+    const res = await this.fetchAndRetryNotFound(`/${encodeURIComponent(id)}`, {
       method: "POST",
     });
 
@@ -637,7 +637,7 @@ export class QuirrelClient<T> {
       return true;
     }
 
-    throw new Error("Unexpected response: " + (await res.text()));
+    throw new Error(`Unexpected response: ${await res.text()}`);
   }
 
   /**
@@ -645,7 +645,7 @@ export class QuirrelClient<T> {
    * @returns false if job could not be found.
    */
   async delete(id: string): Promise<boolean> {
-    const res = await this.fetchAndRetryNotFound("/" + encodeURIComponent(id), {
+    const res = await this.fetchAndRetryNotFound(`/${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
 
@@ -657,7 +657,7 @@ export class QuirrelClient<T> {
       return true;
     }
 
-    throw new Error("Unexpected response: " + (await res.text()));
+    throw new Error(`Unexpected response: ${await res.text()}`);
   }
 
   private isValidSignature(body: string, signature: string): boolean {
@@ -673,7 +673,7 @@ export class QuirrelClient<T> {
 
   async respondTo(
     body: string,
-    headers: IncomingHttpHeaders
+    headers: IncomingHttpHeaders,
   ): Promise<{
     status: number;
     headers: Record<string, string>;
@@ -700,7 +700,7 @@ export class QuirrelClient<T> {
 
     const payload = await this.decryptAndDecodeBody(body);
     const { id, count, retry, nextRepetition, exclusive } = JSON.parse(
-      (headers["x-quirrel-meta"] as string) ?? "{}"
+      (headers["x-quirrel-meta"] as string) ?? "{}",
     );
 
     this.logger.receivedJob(this.route, payload);

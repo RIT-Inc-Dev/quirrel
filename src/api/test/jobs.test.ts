@@ -1,15 +1,15 @@
-import { run } from "./runQuirrel";
-import fastify, { FastifyInstance } from "fastify";
+import type http from "node:http";
 import delay from "delay";
-import type http from "http";
+import fastify, { type FastifyInstance } from "fastify";
+import type { Redis } from "ioredis";
 import request from "supertest";
-import { Redis } from "ioredis";
 import {
   describeAcrossBackends,
   expectToBeInRange,
   makeSignal,
   stopTime,
 } from "../../client/test/util";
+import { run } from "./runQuirrel";
 
 describeAcrossBackends("Jobs", (backend) => {
   let quirrel: http.Server;
@@ -19,9 +19,9 @@ describeAcrossBackends("Jobs", (backend) => {
   let redis: Redis;
   let endpoint: string;
   let bodies: any[] = [];
-  let lastBody: any = undefined;
+  let lastBody: any;
 
-  let bodies$ = makeSignal();
+  const bodies$ = makeSignal();
 
   beforeAll(async () => {
     const result = await run(backend);
@@ -42,7 +42,7 @@ describeAcrossBackends("Jobs", (backend) => {
     endpoint = encodeURIComponent(
       await server.listen({
         port: 0,
-      })
+      }),
     );
   });
 
@@ -58,7 +58,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("post a job", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({ body: JSON.stringify({ foo: "bar" }) })
       .expect(201);
 
@@ -69,7 +69,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("stats", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({ body: JSON.stringify({ foo: "bar" }), delay: 1000 })
       .expect(201);
 
@@ -82,7 +82,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("post multiple jobs", async () => {
     const response = await request(quirrel)
-      .post("/queues/" + endpoint + "/batch")
+      .post(`/queues/${endpoint}/batch`)
       .send([
         { body: JSON.stringify({ first: "job" }) },
         { body: JSON.stringify({ second: "job" }) },
@@ -96,7 +96,7 @@ describeAcrossBackends("Jobs", (backend) => {
   describe("enqueueing a job in the past", () => {
     it("should execute immediately", async () => {
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({ body: JSON.stringify({ inThe: "past" }), runAt: new Date(0) })
         .expect(201);
 
@@ -108,44 +108,44 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("enqueueing a job with delay < 0", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({ body: JSON.stringify({ foo: "bar" }), delay: -1 })
       .expect(
         400,
-        '{"statusCode":400,"code":"FST_ERR_VALIDATION","error":"Bad Request","message":"body/delay must be >= 0"}'
+        '{"statusCode":400,"code":"FST_ERR_VALIDATION","error":"Bad Request","message":"body/delay must be >= 0"}',
       );
   });
 
   test("enqueueing a job with an invalid cron regex", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: JSON.stringify({ foo: "bar" }),
         repeat: { cron: "invalid" },
       })
       .expect(
         400,
-        '{"statusCode":400,"error":"Bad Request","message":"body.repeat.cron uses unsupported syntax. See https://github.com/harrisiirak/cron-parser for reference."}'
+        '{"statusCode":400,"error":"Bad Request","message":"body.repeat.cron uses unsupported syntax. See https://github.com/harrisiirak/cron-parser for reference."}',
       );
   });
 
   test("enqueueing a job with an invalid timezone", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: JSON.stringify({ foo: "bar" }),
         repeat: { cron: "* * * * *", cronTimezone: "Europe/NonExistant" },
       })
       .expect(
         400,
-        '{"statusCode":400,"error":"Bad Request","message":"body.repeat.cronTimezone is invalid, please provide a valid IANA timezone."}'
+        '{"statusCode":400,"error":"Bad Request","message":"body.repeat.cronTimezone is invalid, please provide a valid IANA timezone."}',
       );
   });
 
   describe("enqueueing a job with delay > 32 bit", () => {
     it("does not print TimeoutOverflowWarning", async () => {
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({ body: JSON.stringify({ foo: "bar" }), delay: 3147483647 })
         .expect(201);
     });
@@ -154,15 +154,15 @@ describeAcrossBackends("Jobs", (backend) => {
   describe("enqueueing a job with an endpoint > 86 characters (repro #514)", () => {
     it("works", async () => {
       const endpoint = encodeURIComponent(
-        "https://some-very-long-subdomain.example.org/very/long/queue/endpoint/url/with/a/lot/of/characters"
+        "https://some-very-long-subdomain.example.org/very/long/queue/endpoint/url/with/a/lot/of/characters",
       );
       const job = await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({ body: JSON.stringify({ foo: "bar" }), delay: 1000 })
         .expect(201);
 
       await request(quirrel)
-        .delete("/queues/" + endpoint + "/" + job.body.id)
+        .delete(`/queues/${endpoint}/${job.body.id}`)
         .expect(204);
     });
   });
@@ -170,7 +170,7 @@ describeAcrossBackends("Jobs", (backend) => {
   test("queue list", async () => {
     async function sendTo(endpoint: string) {
       await request(quirrel)
-        .post("/queues/" + encodeURIComponent(endpoint))
+        .post(`/queues/${encodeURIComponent(endpoint)}`)
         .send({ body: JSON.stringify({ foo: "bar" }) })
         .expect(201);
     }
@@ -189,14 +189,14 @@ describeAcrossBackends("Jobs", (backend) => {
         "http://my-url.com/1",
         "http://my-url.com/2",
         "http://my-url.com/3",
-      ].sort()
+      ].sort(),
     );
   });
 
   test("queue list migration", async () => {
     async function sendTo(endpoint: string) {
       await request(quirrel)
-        .post("/queues/" + encodeURIComponent(endpoint))
+        .post(`/queues/${encodeURIComponent(endpoint)}`)
         .send({ body: JSON.stringify({ foo: "bar" }), delay: 100 })
         .expect(201);
     }
@@ -218,7 +218,7 @@ describeAcrossBackends("Jobs", (backend) => {
         "http://my-url.com/1",
         "http://my-url.com/2",
         "http://my-url.com/3",
-      ].sort()
+      ].sort(),
     );
   });
 
@@ -227,7 +227,7 @@ describeAcrossBackends("Jobs", (backend) => {
       const {
         body: { id: jobId1 },
       } = await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: JSON.stringify({ this: "willBeRetrieved", nr: 1 }),
           runAt: new Date(Date.now() + 300).toISOString(),
@@ -237,7 +237,7 @@ describeAcrossBackends("Jobs", (backend) => {
       const {
         body: { id: jobId2 },
       } = await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: JSON.stringify({ this: "willBeRetrieved", nr: 2 }),
           runAt: new Date(Date.now() + 300).toISOString(),
@@ -250,7 +250,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
       expect(cursor).toBe(null);
       const jobsWithoutRunAt = jobs.map(
-        ({ runAt, ...restOfJob }: { runAt: string }) => restOfJob
+        ({ runAt, ...restOfJob }: { runAt: string }) => restOfJob,
       );
 
       expect(jobsWithoutRunAt).toHaveLength(2);
@@ -291,7 +291,7 @@ describeAcrossBackends("Jobs", (backend) => {
       const {
         body: { id },
       } = await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: JSON.stringify({ this: "willBeRetrieved" }),
           runAt,
@@ -321,7 +321,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("post a delayed job", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: JSON.stringify({ lol: "lel" }),
         runAt: new Date(Date.now() + 300).toISOString(),
@@ -339,7 +339,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("delete a job before it's executed", async () => {
     const { body } = await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: JSON.stringify({ iWill: "beDeleted" }),
         runAt: new Date(Date.now() + 300).toISOString(),
@@ -357,7 +357,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("delete all jobs on a queue", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint + "/batch")
+      .post(`/queues/${endpoint}/batch`)
       .send([
         {
           body: JSON.stringify({ iWill: "beDeleted_1" }),
@@ -383,7 +383,7 @@ describeAcrossBackends("Jobs", (backend) => {
     const {
       body: { id: jobId1 },
     } = await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: JSON.stringify({ iAm: "theFirstJob" }),
         runAt: new Date(Date.now() + 300).toISOString(),
@@ -396,7 +396,7 @@ describeAcrossBackends("Jobs", (backend) => {
     const {
       body: { id: jobId2 },
     } = await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: JSON.stringify({ iAm: "theSecondJob" }),
         runAt: new Date(Date.now() + 300).toISOString(),
@@ -413,7 +413,7 @@ describeAcrossBackends("Jobs", (backend) => {
     const {
       body: { id: jobId3 },
     } = await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: JSON.stringify({ iAm: "theSecondJob" }),
         runAt: new Date(Date.now() + 300).toISOString(),
@@ -431,7 +431,7 @@ describeAcrossBackends("Jobs", (backend) => {
   describe("repeated jobs", () => {
     test("work", async () => {
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: "repeat!",
           repeat: {
@@ -448,7 +448,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
     it("can be stacked", async () => {
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: "repeat!",
           repeat: {
@@ -459,7 +459,7 @@ describeAcrossBackends("Jobs", (backend) => {
         .expect(201);
 
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: "repeat 2!",
           repeat: {
@@ -477,7 +477,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
     it("works with idempotency IDs", async () => {
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: "repeat!",
           repeat: {
@@ -489,7 +489,7 @@ describeAcrossBackends("Jobs", (backend) => {
         .expect(201);
 
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: "repeat 2!",
           repeat: {
@@ -509,7 +509,7 @@ describeAcrossBackends("Jobs", (backend) => {
       const {
         body: { id: jobId },
       } = await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: "repeat!",
           repeat: {
@@ -537,7 +537,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("repeat.times = 0", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: "cron",
         repeat: {
@@ -558,7 +558,7 @@ describeAcrossBackends("Jobs", (backend) => {
 
   test("regression #27: delay & repeat.every", async () => {
     await request(quirrel)
-      .post("/queues/" + endpoint)
+      .post(`/queues/${endpoint}`)
       .send({
         body: "delay & repeat.every",
         delay: 100,
@@ -585,7 +585,8 @@ describeAcrossBackends("Jobs", (backend) => {
   test("regression: non-absolute URLs shouldn't be accepted", async () => {
     await request(quirrel)
       .post(
-        "/queues/" + encodeURIComponent("https://${SOME_ENV_VAR}/api/someQueue")
+        "/queues/" +
+          encodeURIComponent("https://${SOME_ENV_VAR}/api/someQueue"),
       )
       .send({
         body: "something",
@@ -600,7 +601,7 @@ describeAcrossBackends("Jobs", (backend) => {
   describe("cron jobs", () => {
     test("work", async () => {
       await request(quirrel)
-        .post("/queues/" + endpoint)
+        .post(`/queues/${endpoint}`)
         .send({
           body: "cron",
           repeat: {
@@ -627,7 +628,7 @@ describeAcrossBackends("Jobs", (backend) => {
     describe("when updating", () => {
       async function registerCron(
         schedule: "0 5 * * *" | "0 6 * * *",
-        timezone: "Etc/UTC" | "Asia/Taipei" // Taoipei doesn't observe daylight savings
+        timezone: "Etc/UTC" | "Asia/Taipei", // Taoipei doesn't observe daylight savings
       ) {
         return await request(quirrel)
           .put("/queues/update-cron")
@@ -646,7 +647,7 @@ describeAcrossBackends("Jobs", (backend) => {
       async function getRunAt() {
         // QuirrelClient と同じく endpoint を二重エンコードして参照する（Azure対応）
         const job = await request(quirrel).get(
-          `/queues/${encodeURIComponent(endpoint + encodeURIComponent("/"))}/@cron`
+          `/queues/${encodeURIComponent(endpoint + encodeURIComponent("/"))}/@cron`,
         );
         expect(job.status).toBe(200);
         return new Date(job.body.runAt);

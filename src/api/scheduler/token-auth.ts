@@ -1,42 +1,44 @@
-import {
+import type { IncomingHttpHeaders, IncomingMessage } from "node:http";
+import basicAuth from "basic-auth";
+import type {
   FastifyPluginCallback,
   FastifyReply,
   FastifyRequest,
   preValidationHookHandler,
 } from "fastify";
 import fp from "fastify-plugin";
-import { IncomingMessage, IncomingHttpHeaders } from "http";
-import { UsageMeter } from "../shared/usage-meter";
-import basicAuth from "basic-auth";
 import jwt from "jsonwebtoken";
+import { UsageMeter } from "../shared/usage-meter";
 
-interface TokenAuthService {
+type TokenAuthService = {
   authenticate(
-    request: FastifyRequest | IncomingMessage
+    request: FastifyRequest | IncomingMessage,
   ): Promise<string | null>;
-}
+};
 
 declare module "fastify" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface
   interface FastifyInstance {
     tokenAuth: TokenAuthService;
     tokenAuthPreValidation: preValidationHookHandler;
   }
 
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface
   interface FastifyRequest {
     tokenId: string;
   }
 }
 
-interface TokenAuthPluginOpts {
+type TokenAuthPluginOpts = {
   enable: boolean;
   passphrases: string[];
   jwtPublicKey?: string;
-}
+};
 
 const tokenAuthServicePlugin: FastifyPluginCallback<TokenAuthPluginOpts> = (
   fastify,
   opts,
-  done
+  done,
 ) => {
   fastify.decorateRequest("tokenId", null);
   fastify.decorate(
@@ -49,7 +51,7 @@ const tokenAuthServicePlugin: FastifyPluginCallback<TokenAuthPluginOpts> = (
       } else {
         request.tokenId = tokenId;
       }
-    }
+    },
   );
 
   function decorateTokenAuth(service: TokenAuthService) {
@@ -67,7 +69,7 @@ const tokenAuthServicePlugin: FastifyPluginCallback<TokenAuthPluginOpts> = (
   }
 
   async function checkJwt(
-    token: string
+    token: string,
   ): Promise<["not_a_jwt"] | ["success", string] | ["invalid"]> {
     const { jwtPublicKey } = opts;
     if (!jwtPublicKey) {
@@ -88,7 +90,7 @@ const tokenAuthServicePlugin: FastifyPluginCallback<TokenAuthPluginOpts> = (
             resolve(["invalid"]);
           }
         });
-      }
+      },
     );
   }
 
@@ -156,5 +158,5 @@ const tokenAuthServicePlugin: FastifyPluginCallback<TokenAuthPluginOpts> = (
 };
 
 export default (fp as any)(
-  tokenAuthServicePlugin
+  tokenAuthServicePlugin,
 ) as FastifyPluginCallback<TokenAuthPluginOpts>;

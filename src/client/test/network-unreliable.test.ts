@@ -1,5 +1,5 @@
+import http from "node:http";
 import { QuirrelClient } from "..";
-import http from "http";
 import { getAddress } from "./util";
 
 test("network unreliable", async () => {

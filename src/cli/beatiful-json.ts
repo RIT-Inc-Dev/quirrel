@@ -1,3 +1,3 @@
 export function stringifyBeautiful(any: any) {
-  return JSON.stringify(any, null, 4)
+  return JSON.stringify(any, null, 4);
 }

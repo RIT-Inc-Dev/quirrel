@@ -1,4 +1,5 @@
-import React, {
+import type React from "react";
+import {
   createContext,
   useCallback,
   useEffect,
@@ -14,7 +15,7 @@ import Pending from "./pages/pending";
 
 export type Route = "cron" | "activity-log" | "pending";
 
-export interface QuirrelDevelopmentUIProps {
+export type QuirrelDevelopmentUIProps = {
   router: {
     initial: Route;
     onChange(route: Route): void;
@@ -27,7 +28,7 @@ export interface QuirrelDevelopmentUIProps {
     };
     linkToAPIDocs?: string;
   };
-}
+};
 
 const pageMap: Record<Route, React.FunctionComponent> = {
   "activity-log": Activity,
@@ -35,10 +36,10 @@ const pageMap: Record<Route, React.FunctionComponent> = {
   pending: Pending,
 };
 
-interface Router {
+type Router = {
   current: Route;
   navigate(route: Route): void;
-}
+};
 
 export const RouterContext = createContext<Router>({
   current: "activity-log",
@@ -50,7 +51,7 @@ export const ConfigContext = createContext<QuirrelDevelopmentUIProps["config"]>(
     authentication: {
       enabled: true,
     },
-  }
+  },
 );
 
 export function QuirrelDevelopmentUI(props: QuirrelDevelopmentUIProps) {
@@ -61,19 +62,19 @@ export function QuirrelDevelopmentUI(props: QuirrelDevelopmentUIProps) {
       setRoute(newRoute);
       onChange(newRoute);
     },
-    [setRoute, onChange]
+    [setRoute, onChange],
   );
 
   const router = useMemo<Router>(
     () => ({ current: route, navigate }),
-    [route, navigate]
+    [route, navigate],
   );
 
   useEffect(() => {
     return listenToNavigationChanges(setRoute);
   }, [listenToNavigationChanges, setRoute]);
 
-  let Page = pageMap[route];
+  const Page = pageMap[route];
 
   return (
     <ConfigContext.Provider value={props.config}>

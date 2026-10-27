@@ -1,5 +1,5 @@
-import { useGlobalSearch } from "../hooks/useGlobalSearch";
 import clsx from "clsx";
+import { useGlobalSearch } from "../hooks/useGlobalSearch";
 
 export function SearchBar() {
   const [searchTerm, setSearchTerm] = useGlobalSearch();
@@ -22,7 +22,7 @@ export function SearchBar() {
         stroke="currentColor"
         className={clsx(
           "absolute right-0 top-0 mt-3 mr-4 text-gray-600 h-4 w-4",
-          !!searchTerm && "hidden"
+          !!searchTerm && "hidden",
         )}
       >
         <path

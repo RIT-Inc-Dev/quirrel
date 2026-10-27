@@ -1,20 +1,21 @@
-import { FastifyPluginCallback } from "fastify";
+import type { FastifyPluginCallback } from "fastify";
 import fp from "fastify-plugin";
 import { PostHog } from "posthog-node";
 
 declare module "fastify" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface
   interface FastifyInstance {
     postHog?: PostHog;
   }
 }
 
-interface PostHogPluginOpts {
+type PostHogPluginOpts = {
   apiKey: string;
-}
+};
 
 const posthogPlugin: FastifyPluginCallback<PostHogPluginOpts> = async (
   fastify,
-  opts
+  opts,
 ) => {
   const postHog = new PostHog(opts.apiKey, {
     host: "https://app.posthog.com",
@@ -28,5 +29,5 @@ const posthogPlugin: FastifyPluginCallback<PostHogPluginOpts> = async (
 };
 
 export default (fp as any)(
-  posthogPlugin
+  posthogPlugin,
 ) as FastifyPluginCallback<PostHogPluginOpts>;

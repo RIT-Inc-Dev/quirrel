@@ -1,10 +1,10 @@
-import { PropsWithChildren } from "react";
 import { Transition } from "@tailwindui/react";
+import type { PropsWithChildren } from "react";
 
-interface ModalProps {
+type ModalProps = {
   show: boolean;
   onRequestClose: () => void;
-}
+};
 
 export function Modal(props: PropsWithChildren<ModalProps>) {
   return (

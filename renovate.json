@@ -1,7 +1,26 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
-    ":pinOnlyDevDependencies"
+    "config:best-practices",
+    "config:js-app",
+    ":automergeMinor",
+    ":automergeLinters",
+    ":automergeTesters",
+    ":automergeTypes",
+    ":automergeDigest"
   ],
-  "labels": ["dependencies"]
+  "timezone": "Asia/Tokyo",
+  "prConcurrentLimit": 0,
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Batch all non-major updates into a single PR",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "non-major dependencies",
+      "groupSlug": "all-non-major"
+    }
+  ]
 }

@@ -1,7 +1,7 @@
 import delay from "delay";
 import { fastify } from "fastify";
-import { QuirrelClient } from "..";
 import { run } from "../../api/test/runQuirrel";
+import { QuirrelClient } from "..";
 import { getAddress, waitUntil } from "./util";
 
 test("cronjob without QuirrelClient", async () => {

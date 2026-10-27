@@ -1,8 +1,8 @@
-import { FastifyPluginCallback } from "fastify";
+import type { FastifyPluginCallback } from "fastify";
 import { UsageMeter } from "../../shared/usage-meter";
 
 import DELETEUsageResponseSchema from "../schemas/usage/DELETE/response.json";
-import { DELETEUsageResponse } from "../types/usage/DELETE/response";
+import type { DELETEUsageResponse } from "../types/usage/DELETE/response";
 
 const usageRoute: FastifyPluginCallback = (fastify, opts, done) => {
   const usageMeter = new UsageMeter(fastify.redis);
@@ -18,9 +18,9 @@ const usageRoute: FastifyPluginCallback = (fastify, opts, done) => {
       summary: "Fetch & reset usage statistics",
       security: [
         {
-          "Admin": []
-        }
-      ]
+          Admin: [],
+        },
+      ],
     },
     async handler(request, reply) {
       const usage = await usageMeter.readAndReset();

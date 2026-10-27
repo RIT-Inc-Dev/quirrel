@@ -9,7 +9,7 @@ export function useLoading() {
       await doIt();
       setIsLoading(false);
     },
-    [setIsLoading]
+    [setIsLoading],
   );
 
   return [loading, withLoading] as const;

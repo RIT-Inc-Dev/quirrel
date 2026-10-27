@@ -1,5 +1,5 @@
+import { randomUUID } from "node:crypto";
 import type { Redis } from "ioredis";
-import { randomUUID } from "crypto";
 
 const TOKEN_ID = "tokens:token-id";
 const ID_TOKEN = "tokens:id-token";
@@ -19,7 +19,7 @@ export class TokenRepo {
       TOKEN_ID,
       ID_TOKEN,
       token,
-      id
+      id,
     );
 
     return token;
@@ -48,7 +48,7 @@ export class TokenRepo {
       2,
       TOKEN_ID,
       ID_TOKEN,
-      id
+      id,
     );
 
     return !!result;

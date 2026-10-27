@@ -1,8 +1,8 @@
-import { QuirrelClient } from "..";
 import { symmetric } from "secure-webhooks";
-import { run } from "../../api/test/runQuirrel";
-import { getAddress } from "./util";
 import request from "supertest";
+import { run } from "../../api/test/runQuirrel";
+import { QuirrelClient } from "..";
+import { getAddress } from "./util";
 
 test("migration", async () => {
   process.env.NODE_ENV = "production";
@@ -54,7 +54,7 @@ test("migration read + write", async () => {
   const endpoint = "https://unused/"; // applicationBaseUrl("unused") + route("")
   const legacyServer = {
     server: oldServer.server,
-    queuePath: "/queues/" + encodeURIComponent(endpoint),
+    queuePath: `/queues/${encodeURIComponent(endpoint)}`,
     async enqueue(body: unknown, options: Record<string, unknown> = {}) {
       const res = await request(this.server)
         .post(this.queuePath)
@@ -103,9 +103,9 @@ test("migration read + write", async () => {
   });
   expect(jobThatAlreadyExists.body).toEqual("old payload");
 
-  const jobThatAlreadyExistsOnNew = await (newClient as any).fetchAgainstCurrent(
-    "/foo"
-  );
+  const jobThatAlreadyExistsOnNew = await (
+    newClient as any
+  ).fetchAgainstCurrent("/foo");
   expect(jobThatAlreadyExistsOnNew.status).toBe(404);
 
   // override: false. if job doesn't exist on old instance, it should be on new
@@ -114,7 +114,7 @@ test("migration read + write", async () => {
     delay: "1h",
   });
   const jobOnNew = await (newClient as any).fetchAgainstCurrent(
-    "/override-false-on-new"
+    "/override-false-on-new",
   );
   expect(jobOnNew.status).toBe(200);
 
@@ -127,7 +127,7 @@ test("migration read + write", async () => {
   });
   expect((await legacyServer.fetchById("override-true")).status).toBe(404);
   expect(
-    (await (newClient as any).fetchAgainstCurrent("/override-true")).status
+    (await (newClient as any).fetchAgainstCurrent("/override-true")).status,
   ).toBe(200);
 
   // delete: should run against both instances

@@ -7,7 +7,7 @@ describe("owl-updates", () => {
 
     await quirrel.redis.sadd(
       "queues:anonymous;https%3A%2F%2Fdemo-endpoint.com",
-      ["some-api"]
+      ["some-api"],
     );
 
     await quirrel.redis.hset(
@@ -20,7 +20,7 @@ describe("owl-updates", () => {
         retry: "[]",
         schedule_meta: "",
         schedule_type: "",
-      }
+      },
     );
 
     await request(quirrel.server)

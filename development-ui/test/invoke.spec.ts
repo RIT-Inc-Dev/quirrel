@@ -1,8 +1,8 @@
-import delay from "delay";
-import { runQuirrel } from "./runQuirrel";
-import { expect } from "chai";
 import { test } from "@playwright/test";
+import { expect } from "chai";
+import delay from "delay";
 import { expectTableCellToEqual, expectTableToBeEmpty } from "./assertions";
+import { runQuirrel } from "./runQuirrel";
 
 let cleanup: (() => Promise<void>)[] = [];
 

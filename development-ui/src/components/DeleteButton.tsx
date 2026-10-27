@@ -1,8 +1,8 @@
 import { useLoading } from "../hooks/useLoading";
 
-interface DeleteButtonProps {
+type DeleteButtonProps = {
   delete(): Promise<void>;
-}
+};
 
 export function DeleteButton(props: DeleteButtonProps) {
   const [isLoading, withLoading] = useLoading();

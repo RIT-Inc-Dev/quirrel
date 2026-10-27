@@ -13,10 +13,10 @@ describe("schema-check", () => {
   it("catches Firebase-style dates", async () => {
     await expect(async () => {
       await quirrel.enqueue(null, {
-        runAt: ({
+        runAt: {
           _seconds: 1608164625,
           _nanoseconds: 119000000,
-        } as any) as Date,
+        } as any as Date,
       });
     }).rejects.toThrowError("expected date, received object");
   });
@@ -27,7 +27,7 @@ describe("schema-check", () => {
         delay: "10 shreks",
       });
     }).rejects.toThrowError(
-      "Please provide a valid time span, according to https://github.com/vercel/ms"
+      "Please provide a valid time span, according to https://github.com/vercel/ms",
     );
   });
 });

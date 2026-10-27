@@ -1,7 +1,6 @@
 import { run } from "../../api/test/runQuirrel";
-import { getAddress, makeSignal } from "./util";
 import { QuirrelClient } from "..";
-import http from "http";
+import { getAddress } from "./util";
 
 const errorLogMock = jest.fn();
 const logMock = jest.fn();
@@ -58,7 +57,7 @@ describe("client logger", () => {
     expect(errorLogMock).toHaveBeenLastCalledWith(
       "Error in job at routeName",
       { result: "fail" },
-      new Error("yey,errors")
+      new Error("yey,errors"),
     );
   });
 

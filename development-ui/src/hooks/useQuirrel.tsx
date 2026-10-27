@@ -1,22 +1,22 @@
+import { produce } from "immer";
 import React, {
-  PropsWithChildren,
+  type PropsWithChildren,
   useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
 } from "react";
-import { BaseLayout } from "../layouts/BaseLayout";
-import { QuirrelClient, Job } from "../../../client";
-import { produce } from "immer";
-import { getConnectionDetailsFromHash } from "../lib/encrypted-connection-details";
+import { type Job, QuirrelClient } from "../../../client";
 import { ConfigContext } from "..";
+import { BaseLayout } from "../layouts/BaseLayout";
+import { getConnectionDetailsFromHash } from "../lib/encrypted-connection-details";
 
 function ensureEndsWithSlash(v: string) {
   if (v.endsWith("/")) {
     return v;
   }
-  return v + "/";
+  return `${v}/`;
 }
 
 function withoutTrailingSlash(url: string): string {
@@ -41,14 +41,14 @@ type JobDTO = Omit<Job<any>, "invoke" | "delete" | "runAt"> & {
   runAt: string;
 };
 
-export interface QuirrelInstanceDetails {
+export type QuirrelInstanceDetails = {
   baseUrl: string;
   token?: string;
   encryptionSecret?: string;
-}
+};
 
 namespace Quirrel {
-  export interface ContextValue {
+  export type ContextValue = {
     activity: Quirrel.Activity[];
     pending: Record<string, Quirrel.JobDescriptor>;
     completed: Record<string, Quirrel.JobDescriptor>;
@@ -56,39 +56,39 @@ namespace Quirrel {
     delete(job: Quirrel.JobDescriptor): Promise<void>;
     connectedTo?: QuirrelInstanceDetails;
     connectTo: (instance: QuirrelInstanceDetails) => void;
-  }
+  };
 
   export namespace Activity {
-    export interface Scheduled {
+    export type Scheduled = {
       type: "scheduled";
       payload: JobDTO;
       date: number;
-    }
-    export interface Started {
+    };
+    export type Started = {
       type: "started";
       payload: { id: string; endpoint: string };
       date: number;
-    }
-    export interface Completed {
+    };
+    export type Completed = {
       type: "completed";
       payload: { id: string; endpoint: string };
       date: number;
-    }
-    export interface Rescheduled {
+    };
+    export type Rescheduled = {
       type: "rescheduled";
       payload: { id: string; endpoint: string; runAt: string };
       date: number;
-    }
-    export interface Invoked {
+    };
+    export type Invoked = {
       type: "invoked";
       payload: { id: string; endpoint: string };
       date: number;
-    }
-    export interface Deleted {
+    };
+    export type Deleted = {
       type: "deleted";
       payload: { id: string; endpoint: string };
       date: number;
-    }
+    };
   }
 
   export type Activity =
@@ -99,13 +99,13 @@ namespace Quirrel {
     | Activity.Deleted
     | Activity.Started;
 
-  export interface JobDescriptor extends JobDTO {
+  export type JobDescriptor = JobDTO & {
     started: boolean;
-  }
+  };
 }
 
 function jobKey(descriptor: Pick<Quirrel.JobDescriptor, "endpoint" | "id">) {
-  return descriptor.endpoint + ";" + descriptor.id;
+  return `${descriptor.endpoint};${descriptor.id}`;
 }
 
 const mockCtxValue: Quirrel.ContextValue = {
@@ -129,7 +129,7 @@ function useImmer<T>(defaultValue: T) {
     (recipe: (v: T) => void): void => {
       setState((prevState) => produce(prevState, recipe));
     },
-    [setState]
+    [setState],
   );
 
   return [value, setStateWithImmer] as const;
@@ -154,7 +154,7 @@ function useJobsReducer() {
           };
         });
       }),
-    [setState]
+    [setState],
   );
 
   const onActivity = useCallback(
@@ -211,7 +211,7 @@ function useJobsReducer() {
           }
         }
       }),
-    [setState]
+    [setState],
   );
 
   return [
@@ -224,21 +224,19 @@ function useJobsReducer() {
 }
 
 function useQuirrelClient() {
-  const [
-    instanceDetails,
-    setInstanceDetails,
-  ] = useState<QuirrelInstanceDetails>();
+  const [instanceDetails, setInstanceDetails] =
+    useState<QuirrelInstanceDetails>();
   const clientGetter = useRef<(endpoint: string) => QuirrelClient<unknown>>();
   const [isConnected, setIsConnected] = useState(false);
 
   const useInstance = useCallback(
     (instanceDetails: QuirrelInstanceDetails) => {
-      let { baseUrl, token } = instanceDetails;
+      const { baseUrl, token } = instanceDetails;
 
       function getClient(endpoint: string) {
         const url = new URL(endpoint);
         if (!["http:", "https:"].includes(url.protocol)) {
-          const error = new Error("Not a valid endpoint: " + endpoint);
+          const error = new Error(`Not a valid endpoint: ${endpoint}`);
           alert(error);
           throw error;
         }
@@ -260,7 +258,7 @@ function useQuirrelClient() {
 
             alreadyAlerted = true;
             window.alert(
-              "One of your jobs can't be decrypted in the browser, since it's been encrypted with an old version of Quirrel. No worries though - this doesn't affect your application at all, since that uses Node's Crypto."
+              "One of your jobs can't be decrypted in the browser, since it's been encrypted with an old version of Quirrel. No worries though - this doesn't affect your application at all, since that uses Node's Crypto.",
             );
           },
         });
@@ -272,7 +270,7 @@ function useQuirrelClient() {
 
       return getClient;
     },
-    [setInstanceDetails, clientGetter, setIsConnected]
+    [setInstanceDetails, clientGetter, setIsConnected],
   );
 
   const connectionWasAborted = useCallback(() => {
@@ -290,12 +288,12 @@ function useQuirrelClient() {
 }
 
 async function isHealthy(
-  baseUrl: string
+  baseUrl: string,
 ): Promise<{ isHealthy: boolean; stopPolling?: boolean }> {
   baseUrl = withoutTrailingSlash(baseUrl);
   const connectsToLocalhost = baseUrl.includes("localhost");
   try {
-    const res = await fetch(baseUrl + "/health");
+    const res = await fetch(`${baseUrl}/health`);
     const isHealthy = res.status === 200;
     if (connectsToLocalhost) {
       return { isHealthy, stopPolling: false };
@@ -308,9 +306,12 @@ async function isHealthy(
       }
     }
   } catch (error) {
-    if (error.message === "Not allowed to request resource") {
+    if (
+      error instanceof Error &&
+      error.message === "Not allowed to request resource"
+    ) {
       window.alert(
-        "This browser does not support connecting to your local Quirrel instance. Please use a different browser."
+        "This browser does not support connecting to your local Quirrel instance. Please use a different browser.",
       );
       return { isHealthy: false, stopPolling: true };
     }
@@ -347,7 +348,7 @@ export function QuirrelProvider(props: PropsWithChildren<{}>) {
       const client = quirrelClient.getFor!(job.endpoint);
       await client.invoke(job.id);
     },
-    [quirrelClient.getFor]
+    [quirrelClient.getFor],
   );
 
   const deleteCallback = useCallback(
@@ -355,13 +356,13 @@ export function QuirrelProvider(props: PropsWithChildren<{}>) {
       const client = quirrelClient.getFor!(job.endpoint);
       await client.delete(job.id);
     },
-    [quirrelClient.getFor]
+    [quirrelClient.getFor],
   );
 
   const loadInitialJobs = useCallback(
     async (getClient: ReturnType<typeof quirrelClient.useInstance>) => {
       const [endpoints, error] = await getAllEndpoints(
-        getClient("https://this.is.not.read/")
+        getClient("https://this.is.not.read/"),
       );
       if (error) {
         return error;
@@ -375,14 +376,14 @@ export function QuirrelProvider(props: PropsWithChildren<{}>) {
             jobs.map((j) => ({
               ...j,
               runAt: j.runAt.toISOString(),
-            }))
+            })),
           );
         }
       }
 
       return "success";
     },
-    [dump]
+    [dump],
   );
 
   const connectActivityStream = useCallback(
@@ -393,7 +394,7 @@ export function QuirrelProvider(props: PropsWithChildren<{}>) {
           const url = new URL(baseUrl);
           url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
           url.pathname = ensureEndsWithSlash(url.pathname);
-          return url.toString() + "activity";
+          return `${url.toString()}activity`;
         }
 
         const socket = new WebSocket(activityUrl(baseUrl), token || "ignored");
@@ -431,13 +432,13 @@ export function QuirrelProvider(props: PropsWithChildren<{}>) {
 
       connect();
     },
-    [dump, connectedSocket, quirrelClient.connectionWasAborted, onActivity]
+    [dump, connectedSocket, quirrelClient.connectionWasAborted, onActivity],
   );
 
   const connect = useCallback(
     async (instanceDetails: QuirrelInstanceDetails) => {
       const { isHealthy: _isHealthy, stopPolling } = await isHealthy(
-        instanceDetails.baseUrl
+        instanceDetails.baseUrl,
       );
       if (stopPolling) {
         return "stopPolling";
@@ -451,14 +452,14 @@ export function QuirrelProvider(props: PropsWithChildren<{}>) {
       const result = await loadInitialJobs(getClient);
       if (result === "unauthorized") {
         window.alert(
-          "Please authenticate with your QUIRREL_TOKEN via the top-left connection menu."
+          "Please authenticate with your QUIRREL_TOKEN via the top-left connection menu.",
         );
         return "stopPolling";
       }
       connectActivityStream(instanceDetails);
       return "success";
     },
-    [quirrelClient.useInstance, loadInitialJobs, connectActivityStream]
+    [quirrelClient.useInstance, loadInitialJobs, connectActivityStream],
   );
 
   useEffect(() => {
@@ -473,7 +474,7 @@ export function QuirrelProvider(props: PropsWithChildren<{}>) {
         const result = await connect(
           connDetails ?? {
             baseUrl: config.fixedEndpoint ?? "http://localhost:9181",
-          }
+          },
         );
 
         if (result === "stopPolling" || result === "success") {

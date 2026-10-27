@@ -1,10 +1,8 @@
-import { FastifyPluginCallback } from "fastify";
-
-import POSTTokensParamsSchema from "../schemas/tokens/PUT/params.json";
-import { POSTTokensParams } from "../types/tokens/PUT/params";
-
+import type { FastifyPluginCallback } from "fastify";
 import DELETETokenParamsSchema from "../schemas/tokens/DELETE/params.json";
-import { DELETETokensTokenParams } from "../types/tokens/DELETE/params";
+import POSTTokensParamsSchema from "../schemas/tokens/PUT/params.json";
+import type { DELETETokensTokenParams } from "../types/tokens/DELETE/params";
+import type { POSTTokensParams } from "../types/tokens/PUT/params";
 
 const tokensPlugin: FastifyPluginCallback = (fastify, opts, done) => {
   fastify.addHook("onRequest", fastify.basicAuth);

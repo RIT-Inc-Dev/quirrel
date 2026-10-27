@@ -1,32 +1,32 @@
-import fastify from "fastify";
-import { Redis } from "ioredis";
-import owlPlugin from "./owl";
-import redisPlugin from "./redis";
-import tokensRoute from "./routes/tokens";
-import tokensRepoPlugin from "./tokens";
-import health from "./routes/health";
-import queues from "./routes/queues";
-import usageRoute from "./routes/usage";
+import type { AddressInfo } from "node:net";
+import cors from "@fastify/cors";
+import fastifyRateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
-import pack from "../../../package.json";
-import basicAuthPlugin from "./basic-auth";
-import type { AddressInfo } from "net";
-import tokenAuthPlugin from "./token-auth";
-import activityPlugin from "./routes/activity";
+import fastify from "fastify";
 import blipp from "fastify-blipp";
-import cors from "@fastify/cors";
-import telemetry from "./telemetry";
-import sentryPlugin from "./sentry";
-import loggerPlugin from "./logger";
-import indexRoute from "./routes/index";
+import type { Redis } from "ioredis";
+import pack from "../../../package.json";
+import type { Logger } from "../shared/logger";
 import { StructuredLogger } from "../shared/structured-logger";
-import { Logger } from "../shared/logger";
+import basicAuthPlugin from "./basic-auth";
 import { jobsRepoPlugin } from "./jobs-repo";
-import fastifyRateLimit from "@fastify/rate-limit";
+import loggerPlugin from "./logger";
+import owlPlugin from "./owl";
 import posthogPlugin from "./posthog";
+import redisPlugin from "./redis";
+import activityPlugin from "./routes/activity";
+import health from "./routes/health";
+import indexRoute from "./routes/index";
+import queues from "./routes/queues";
+import tokensRoute from "./routes/tokens";
+import usageRoute from "./routes/usage";
+import sentryPlugin from "./sentry";
+import telemetry from "./telemetry";
+import tokenAuthPlugin from "./token-auth";
+import tokensRepoPlugin from "./tokens";
 
-export interface QuirrelServerConfig {
+export type QuirrelServerConfig = {
   redisFactory: () => Redis;
   port?: number;
   host?: string;
@@ -39,9 +39,10 @@ export interface QuirrelServerConfig {
   rateLimiter?: {
     max?: number;
   };
-}
+};
 
 declare module "fastify" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface
   interface FastifyInstance {
     adminBasedAuthEnabled: boolean;
   }

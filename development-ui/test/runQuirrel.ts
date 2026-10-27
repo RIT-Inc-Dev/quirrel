@@ -1,6 +1,6 @@
-import { QuirrelClient, runQuirrel as _runQuirrel } from "../../";
+import http from "node:http";
 import IORedis from "ioredis-mock";
-import http from "http";
+import { runQuirrel as _runQuirrel, QuirrelClient } from "../../";
 
 function getRandomPort() {
   return 3000 + Math.floor(Math.random() * 1000);
@@ -28,7 +28,7 @@ export async function runQuirrel({ port = 9181 }: { port?: number } = {}) {
     route: "",
     config: {
       applicationBaseUrl: "http://localhost:6000",
-      quirrelBaseUrl: "http://localhost:" + port,
+      quirrelBaseUrl: `http://localhost:${port}`,
     },
   });
 

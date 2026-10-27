@@ -1,7 +1,7 @@
-import { Logger } from "./logger";
 import chalk from "chalk";
-import { JobDTO } from "../../client/job";
-import { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
+import type { JobDTO } from "../../client/job";
+import type { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
+import type { Logger } from "./logger";
 
 export function getQueueName(endpoint: string) {
   return new URL(endpoint).pathname;
@@ -28,27 +28,27 @@ environment variable.
 `
     : ""
 }
-Listening on {yellow ${address}}.`.trim()
+Listening on {yellow ${address}}.`.trim(),
     );
   }
 
   executionErrored(
     job: { tokenId: string; id: string; endpoint: string; body: string },
-    error: string
+    error: string,
   ): void {
     console.error("Caught error during execution:", error, job);
   }
   jobCreated(
     job: JobDTO & {
       tokenId: string;
-    }
+    },
   ): void {
     if (job.id === "@cron") {
       console.log(
         chalk`
 ⏰Registered a Cron Job
    {gray endpoint:} {yellow ${getQueueName(job.endpoint)}}
-   {gray schedule:} {yellow ${job.repeat?.cron}}`
+   {gray schedule:} {yellow ${job.repeat?.cron}}`,
       );
 
       return;
@@ -59,7 +59,7 @@ Listening on {yellow ${address}}.`.trim()
 📝Created Job
    {gray queue:} {yellow ${getQueueName(job.endpoint)}}
       {gray id:} {yellow ${job.id}}
-    {gray body:} {yellow ${job.body}}`
+    {gray body:} {yellow ${job.body}}`,
     );
   }
 
@@ -72,26 +72,24 @@ Listening on {yellow ${address}}.`.trim()
     console.log(
       crons.crons
         .map((c) => chalk`  {yellow ${c.route}:} {green ${c.schedule}}`)
-        .join("\n")
+        .join("\n"),
     );
 
     if (deleted.length) {
-      console.log(
-        chalk`  {red obsolete:} {yellow ${deleted.join(", ")}}`
-      );
+      console.log(chalk`  {red obsolete:} {yellow ${deleted.join(", ")}}`);
     }
   }
 
   jobDeleted(
     job: JobDTO & {
       tokenId: string;
-    }
+    },
   ): void {
     if (job.id === "@cron") {
       console.log(
         chalk`
 ⏰Unregistered a Cron Job
-   {gray endpoint:} {yellow ${getQueueName(job.endpoint)}}`
+   {gray endpoint:} {yellow ${getQueueName(job.endpoint)}}`,
       );
 
       return;
@@ -109,10 +107,10 @@ Listening on {yellow ${address}}.`.trim()
 👟Executing job
   {gray queue:} {yellow ${getQueueName(job.endpoint)}}
      {gray id:} {yellow ${job.id}}
-   {gray body:} {yellow ${job.body}}`
+   {gray body:} {yellow ${job.body}}`,
     );
     return () => {
-      console.log("\n" + chalk`✔️ Successfully executed {yellow ${job.id}}.`);
+      console.log(`\n${chalk`✔️ Successfully executed {yellow ${job.id}}.`}`);
     };
   }
 }

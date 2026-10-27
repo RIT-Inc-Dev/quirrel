@@ -34,5 +34,5 @@ export function getHashConfig(): Record<string, any> | undefined {
 }
 
 export function configToHash(v: Record<string, any>): string {
-  return "#" + toBase64(JSON.stringify(v));
+  return `#${toBase64(JSON.stringify(v))}`;
 }

@@ -1,6 +1,6 @@
+import Encryptor from "secure-e2ee";
 import type { QuirrelInstanceDetails } from "../hooks/useQuirrel";
 import { configToHash, getHashConfig } from "./hash-config";
-import Encryptor from "secure-e2ee";
 
 export function extendTo32Characters(passphrase: string): string {
   if (passphrase.length > 32) {
@@ -26,7 +26,7 @@ async function encrypt(value: string, passphrase: string): Promise<string> {
 
 async function decrypt(
   value: string,
-  passphrase: string
+  passphrase: string,
 ): Promise<string | null> {
   try {
     const encryptor = getEncryptor(passphrase);
@@ -49,7 +49,7 @@ export async function getConnectionDetailsFromHash(): Promise<
     return;
   }
 
-  do {
+  for (;;) {
     const passphrase = window.prompt("Please enter your passphrase.");
     if (!passphrase) {
       return;
@@ -65,14 +65,14 @@ export async function getConnectionDetailsFromHash(): Promise<
     } catch (error) {
       return;
     }
-  } while (true);
+  }
 }
 
 function askForPassphrase() {
-  do {
+  for (;;) {
     const passphrase = window.prompt(
       "To prevent your credentials from being leaked to your browser history, please enter an encryption passphrase:",
-      "min 10 characters"
+      "min 10 characters",
     );
     if (!passphrase) {
       return;
@@ -83,11 +83,11 @@ function askForPassphrase() {
     }
 
     return passphrase;
-  } while (true);
+  }
 }
 
 export async function connectionDetailsToHash(
-  details: QuirrelInstanceDetails
+  details: QuirrelInstanceDetails,
 ): Promise<string | undefined> {
   const passphrase = askForPassphrase();
   if (!passphrase) {

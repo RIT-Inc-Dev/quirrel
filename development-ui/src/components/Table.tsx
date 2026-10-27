@@ -1,19 +1,19 @@
 import { useGlobalSearch } from "../hooks/useGlobalSearch";
 import * as SearchPredicates from "../lib/search-predicates";
 
-interface TableRow<T> {
+type TableRow<T> = {
   title: string;
   render: (v: T) => React.ReactChild | null;
   renderTooltip?: (v: T) => string;
-}
+};
 
-interface TableProps<T> {
+type TableProps<T> = {
   items: T[];
   extractKey: (item: T) => string;
   columns: TableRow<T>[];
   shouldBeHidden?: (row: T, searchTerm: string) => boolean;
   endOfRow?: (v: T) => React.ReactChild;
-}
+};
 
 function defaultShouldBeHidden(row: any, searchTerm: string) {
   return !SearchPredicates.objectIncludesSearchterm(row, searchTerm);
@@ -24,7 +24,7 @@ export function Table<T>(props: TableProps<T>) {
   const [searchTerm] = useGlobalSearch();
 
   const itemsToRender = items.filter(
-    (item) => !(shouldBeHidden ?? defaultShouldBeHidden)(item, searchTerm)
+    (item) => !(shouldBeHidden ?? defaultShouldBeHidden)(item, searchTerm),
   );
 
   return (

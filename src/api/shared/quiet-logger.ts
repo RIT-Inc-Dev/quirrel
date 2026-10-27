@@ -1,21 +1,21 @@
-import { Logger } from "./logger";
-import { JobDTO } from "../../client/job";
-import { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
+import type { JobDTO } from "../../client/job";
+import type { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
 import { getQueueName } from "./dx-logger";
+import type { Logger } from "./logger";
 
 export class QuietLogger implements Logger {
   started() {}
 
   executionErrored(
     job: { tokenId: string; id: string; endpoint: string; body: string },
-    error: string
+    error: string,
   ) {
     console.error("Caught error during execution:", error, job);
   }
   jobCreated(
     job: JobDTO & {
       tokenId: string;
-    }
+    },
   ) {
     if (job.id === "@cron") {
       return;
@@ -24,7 +24,7 @@ export class QuietLogger implements Logger {
     console.log(
       `Created Job on ${getQueueName(job.endpoint)}, #${
         job.id
-      }, ${job.body.slice(0, 20)}`
+      }, ${job.body.slice(0, 20)}`,
     );
   }
 
@@ -35,14 +35,14 @@ export class QuietLogger implements Logger {
 
     console.log(
       "Updated Cron jobs: " +
-        crons.crons.map((c) => c.route + ": " + c.schedule).join("; ")
+        crons.crons.map((c) => `${c.route}: ${c.schedule}`).join("; "),
     );
   }
 
   jobDeleted(
     job: JobDTO & {
       tokenId: string;
-    }
+    },
   ): void {
     console.log(`Deleted job ${job.id} on ${getQueueName(job.endpoint)}`);
   }
@@ -54,7 +54,7 @@ export class QuietLogger implements Logger {
     body: string;
   }): () => void {
     console.log(
-      `Starting execution of ${getQueueName(job.endpoint)}, ${job.id} ...`
+      `Starting execution of ${getQueueName(job.endpoint)}, ${job.id} ...`,
     );
     return () => {
       console.log(`Success.`);

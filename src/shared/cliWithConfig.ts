@@ -1,7 +1,7 @@
+import { promises as fs } from "node:fs";
 import { program } from "commander";
-import pack from "../../package.json";
 import yaml from "js-yaml";
-import { promises as fs } from "fs";
+import pack from "../../package.json";
 
 async function readYaml(filename: string): Promise<NodeJS.Dict<string>> {
   const contents = await fs.readFile(filename, { encoding: "utf-8" });
@@ -10,7 +10,7 @@ async function readYaml(filename: string): Promise<NodeJS.Dict<string>> {
 }
 
 export async function cliWithConfig(
-  doIt: (config: NodeJS.Dict<string>) => Promise<{ teardown(): Promise<void> }>
+  doIt: (config: NodeJS.Dict<string>) => Promise<{ teardown(): Promise<void> }>,
 ) {
   process.on("unhandledRejection", (reason, promise) => {
     console.error("Unhandled Rejection at:", promise, "reason:", reason);
@@ -25,7 +25,7 @@ export async function cliWithConfig(
   const { config: configLocation } = program.opts();
 
   const { teardown } = await doIt(
-    !!configLocation ? await readYaml(configLocation) : process.env
+    configLocation ? await readYaml(configLocation) : process.env,
   );
 
   async function _teardown(signal: string) {

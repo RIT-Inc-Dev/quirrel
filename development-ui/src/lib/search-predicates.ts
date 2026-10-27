@@ -1,6 +1,6 @@
 export function objectIncludesSearchterm(
   object: Record<string, any>,
-  searchTerm: string
+  searchTerm: string,
 ): boolean {
   return JSON.stringify(object)
     .toLowerCase()

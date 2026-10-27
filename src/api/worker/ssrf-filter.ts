@@ -1,8 +1,8 @@
 // shamelessly stolem from https://github.com/y-mehta/ssrf-req-filter
 
-import https from "https";
-import http from "http";
-import ipaddr from "ipaddr.js"
+import http from "node:http";
+import https from "node:https";
+import ipaddr from "ipaddr.js";
 
 function checkIp(ip: string): boolean {
   if (!ipaddr.isValid(ip)) {
@@ -21,7 +21,8 @@ function checkIp(ip: string): boolean {
 }
 
 export function ssrfFilter(url: URL) {
-  const agent = url.protocol === "https:" ? new https.Agent() : new http.Agent();
+  const agent =
+    url.protocol === "https:" ? new https.Agent() : new http.Agent();
   const oldCreateConnection = (agent as any).createConnection;
   (agent as any).createConnection = function (options: any, func: any): any {
     const { host: address } = options;
