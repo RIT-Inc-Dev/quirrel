@@ -1,5 +1,5 @@
 import { Logger } from "./logger";
-import * as uuid from "uuid";
+import { randomUUID } from "crypto";
 import pino from "pino";
 import { JobDTO } from "../../client/job";
 import { QueuesUpdateCronBody } from "../scheduler/types/queues/update-cron";
@@ -46,7 +46,7 @@ export class StructuredLogger implements Logger {
     endpoint: string;
     body: string;
   }): () => void {
-    const child = this.log.child({ correlationId: uuid.v4() });
+    const child = this.log.child({ correlationId: randomUUID() });
 
     child.info({ job }, "Started execution of job.");
     return () => {

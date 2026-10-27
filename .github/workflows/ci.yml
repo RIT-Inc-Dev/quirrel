@@ -12,11 +12,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [20, 22, 24]
-      fail-fast: false
-
     services:
       redis:
         image: redis
@@ -34,33 +29,26 @@ jobs:
       DISABLE_TELEMETRY: true
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+    - uses: actions/checkout@v5
+    - uses: jdx/mise-action@v3
     - run: npm ci
     - run: npm run build
     - run: npm test -- --coverage
-    - if: ${{ matrix.node-version == 22 }}
-      name: Coveralls Quirrel
+    - name: Coveralls Quirrel
       uses: coverallsapp/github-action@master
       with:
         flag-name: quirrel
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: coverage/lcov.info
         parallel: true
-    - if: ${{ matrix.node-version == 22 }}
-      run: npm ci
+    - run: npm ci
       working-directory: development-ui
-    - if: ${{ matrix.node-version == 22 }}
-      name: Install Playwright Browsers
+    - name: Install Playwright Browsers
       run: npx playwright install --with-deps
       working-directory: development-ui
-    - if: ${{ matrix.node-version == 22 }}
-      run: npm run test:ci
+    - run: npm run test:ci
       working-directory: development-ui
-    - if: ${{ matrix.node-version == 22 }}
-      name: Coveralls Finished
+    - name: Coveralls Finished
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}

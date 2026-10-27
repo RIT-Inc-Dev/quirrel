@@ -18,7 +18,7 @@ describe("schema-check", () => {
           _nanoseconds: 119000000,
         } as any) as Date,
       });
-    }).rejects.toThrowError("Expected date, received object");
+    }).rejects.toThrowError("expected date, received object");
   });
 
   it("catches non-vercel/ms-compliant delays", async () => {
